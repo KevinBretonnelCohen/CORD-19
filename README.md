@@ -5,3 +5,4 @@ This repository is for computational linguistics, natural language processing, a
 
 https://pages.semanticscholar.org/coronavirus-research
 
+CORD-19-JSON-Parser.Rmd/.html: Parses the CORD-19 JSON files and pulls out the important text.
