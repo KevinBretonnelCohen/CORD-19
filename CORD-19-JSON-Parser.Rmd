@@ -1,0 +1,65 @@
+---
+title: "CORD-19 Corpus"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+#install.packages("rjson")
+library("rjson")
+```
+
+## How to navigate a single CORD-19 JSON file
+
+```{r parse.single.file}
+# no abstract
+#json.contents <- fromJSON(file = "/Users/transfer/Dropbox/a-m/Corpora/cord19/noncomm_use_subset/ff34c772e37156609477e7f0fa4aba793171f806.json") # no abstract
+
+# also no abstract
+#json.contents <- fromJSON(file = "/Users/transfer/Dropbox/a-m/Corpora/cord19/noncomm_use_subset/ff5a79ed22ea416e6d89caad1cf0d83dbc741a4b.json") # 
+
+
+
+json.contents <- fromJSON(file = "/Users/transfer/Dropbox/a-m/Corpora/cord19/noncomm_use_subset/025ed2caa0ae1ab7f04d3479116e6ed2a334938d.json") # 
+
+
+# works
+#print(json.contents) 
+print(json.contents$paper_id) # works
+print(json.contents$metadata$title) # works
+#print(json.contents$metadata$authors) # works
+#print(json.contents$body_text) # works, but not what I need
+print(json.contents[[1]]) # the paper ID
+print(json.contents$paper_id) # 
+#print(json.contents$body_text) # works, but not what I need
+print(length(json.contents$body_text))
+
+print(json.contents$paper_id) # works
+print(json.contents$metadata$title) # works
+if (length(json.contents$abstract) > 0) { 
+  # each thing in the list is a separate chunk of the text of the abstract, which could be multiple paragraphs/sections
+  for (j in 1:length(json.contents$abstract)) {
+    print("*********%%%%%%%%%%% ABSTRACT ABSTRACT ABSTRACT %%%%%%%%%%%%%*********")
+    print(json.contents$abstract[[j]]$text)
+  }
+}
+
+# this for-loop goes through a single file and extracts the text of the body. need separate code for title, abstract (if there be one), etc.
+for (i in 1:length(json.contents$body_text)) {
+  print(paste("Body iterator value:", i))
+  #print(json.contents$body_text[i])
+  print(json.contents$body_text[[i]]$text)
+}
+```
+
+```{r parse.directory.contents}
+
+```
+
+## For reproducibility
+
+```{r}
+sessionInfo()
+```
+
+
