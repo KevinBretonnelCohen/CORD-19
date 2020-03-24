@@ -211,7 +211,6 @@ output.to.text.file &lt;- function(textual.contents, file.name) {
 <pre class="r"><code># the argument json.contents is an rjson object containing the contents of a single file.
 # the argument section.to.get tells whether to get an individual section, or all.
 # values for section.to.get: TITLE, ABSTRACT, BODY, ALL
-#parse.single.file &lt;- function(json.contents, get.section) {
 get.json.text &lt;- function(json.contents, section.to.get) {
   
   textual.contents &lt;- &quot;&quot;
@@ -246,7 +245,6 @@ get.json.text &lt;- function(json.contents, section.to.get) {
     for (i in 1:length(json.contents$body_text)) {
       if (DEBUG) {
         print(paste(&quot;Body iterator value:&quot;, i))
-        #print(json.contents$body_text[i])
         print(json.contents$body_text[[i]]$text)
       }
       textual.contents &lt;- paste(json.contents$body_text[[i]]$text)
@@ -273,35 +271,7 @@ get.json.text &lt;- function(json.contents, section.to.get) {
 # 
 # get.json.text(json.contents, section.to.get = &quot;BODY&quot;)
 # 
-# get.json.text(json.contents, section.to.get = &quot;ALL&quot;)
-  
-# works
-#print(json.contents) 
-#print(json.contents$paper_id) # works
-#print(json.contents$metadata$title) # works
-#print(json.contents$metadata$authors) # works
-#print(json.contents$body_text) # works, but not what I need
-#print(json.contents[[1]]) # the paper ID
-#print(json.contents$paper_id) # 
-#print(json.contents$body_text) # works, but not what I need
-#print(length(json.contents$body_text))
-
-#print(json.contents$paper_id) # works
-#print(json.contents$metadata$title) # works
-# if (length(json.contents$abstract) &gt; 0) { 
-#   # each thing in the list is a separate chunk of the text of the abstract, which could be multiple paragraphs/sections
-#   for (j in 1:length(json.contents$abstract)) {
-#     print(&quot;*********%%%%%%%%%%% ABSTRACT ABSTRACT ABSTRACT %%%%%%%%%%%%%*********&quot;)
-#     print(json.contents$abstract[[j]]$text)
-#   }
-# }
-
-## this for-loop goes through a single file and extracts the text of the body. need separate code for title, abstract (if there be one), etc.
-#for (i in 1:length(json.contents$body_text)) {
-#  print(paste(&quot;Body iterator value:&quot;, i))
-#  #print(json.contents$body_text[i])
-#  print(json.contents$body_text[[i]]$text)
-#}</code></pre>
+# get.json.text(json.contents, section.to.get = &quot;ALL&quot;)</code></pre>
 </div>
 <div id="process-contents-of-a-directory" class="section level4">
 <h4>Process contents of a directory</h4>
@@ -640,6 +610,35 @@ print(paste(&quot;Count of this subset of files:&quot;, as.character(length(dire
 ## [1] &quot;Paper ID: fc3bce122003ef28564d0dfaec7bd5771cfa4bff&quot;
 ## [1] &quot;FIRST DETECTION OF CANINE PARVOVIRUS TYPE 2C IN BRAZIL&quot;</code></pre>
 </div>
+</div>
+<div id="extra-code-snippets-that-i-have-tried" class="section level3">
+<h3>Extra code snippets that I have tried</h3>
+<pre class="r"><code>#print(json.contents) # works
+#print(json.contents$paper_id) # works
+#print(json.contents$metadata$title) # works
+#print(json.contents$metadata$authors) # works
+#print(json.contents$body_text) # works, but not what I need
+#print(json.contents[[1]]) # the paper ID
+#print(json.contents$paper_id) # 
+#print(json.contents$body_text) # works, but not what I need
+#print(length(json.contents$body_text))
+
+#print(json.contents$paper_id) # works
+#print(json.contents$metadata$title) # works
+# if (length(json.contents$abstract) &gt; 0) { 
+#   # each thing in the list is a separate chunk of the text of the abstract, which could be multiple paragraphs/sections
+#   for (j in 1:length(json.contents$abstract)) {
+#     print(&quot;*********%%%%%%%%%%% ABSTRACT ABSTRACT ABSTRACT %%%%%%%%%%%%%*********&quot;)
+#     print(json.contents$abstract[[j]]$text)
+#   }
+# }
+
+## this for-loop goes through a single file and extracts the text of the body. need separate code for title, abstract (if there be one), etc.
+#for (i in 1:length(json.contents$body_text)) {
+#  print(paste(&quot;Body iterator value:&quot;, i))
+#  #print(json.contents$body_text[i])
+#  print(json.contents$body_text[[i]]$text)
+#}</code></pre>
 </div>
 </div>
 <div id="for-reproducibility" class="section level2">

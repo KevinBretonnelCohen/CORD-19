@@ -45,7 +45,6 @@ output.to.text.file <- function(textual.contents, file.name) {
 # the argument json.contents is an rjson object containing the contents of a single file.
 # the argument section.to.get tells whether to get an individual section, or all.
 # values for section.to.get: TITLE, ABSTRACT, BODY, ALL
-#parse.single.file <- function(json.contents, get.section) {
 get.json.text <- function(json.contents, section.to.get) {
   
   textual.contents <- ""
@@ -80,7 +79,6 @@ get.json.text <- function(json.contents, section.to.get) {
     for (i in 1:length(json.contents$body_text)) {
       if (DEBUG) {
         print(paste("Body iterator value:", i))
-        #print(json.contents$body_text[i])
         print(json.contents$body_text[[i]]$text)
       }
       textual.contents <- paste(json.contents$body_text[[i]]$text)
@@ -109,8 +107,34 @@ get.json.text <- function(json.contents, section.to.get) {
 # 
 # get.json.text(json.contents, section.to.get = "ALL")
   
-# works
-#print(json.contents) 
+```
+
+#### Process contents of a directory
+
+```{r parse.directory.contents}
+
+# NB NB NB: if there are more files in the directory than can be listed, you will get NAs for the file names. Consequently, I am limiting them by specifying their beginning, as well as their extension.  For example: ff*.json, rather than *.json
+directory.contents <- list.files("/Users/transfer/Dropbox/a-m/Corpora/cord19/noncomm_use_subset/", pattern = "ff*.json", full.names = TRUE)
+
+print(paste("Count of this subset of files:", as.character(length(directory.contents))))
+print(directory.contents[1:10])
+
+for (i in 1:length(directory.contents)) {
+  json.contents <- fromJSON(file = directory.contents[i])
+  if (DEBUG) {
+    print(paste("Paper ID:", json.contents$paper_id))
+  }
+  paper.id <- json.contents$paper_id
+  textual.contents <- get.json.text(json.contents, "TITLE")
+  file.name <- paste(output.directory, paper.id, sep = "")
+  output.to.text.file(textual.contents, file.name = file.name)
+}
+```
+
+### Extra code snippets that I have tried
+
+```{r extra.code, eval = FALSE}
+#print(json.contents) # works
 #print(json.contents$paper_id) # works
 #print(json.contents$metadata$title) # works
 #print(json.contents$metadata$authors) # works
@@ -136,28 +160,7 @@ get.json.text <- function(json.contents, section.to.get) {
 #  #print(json.contents$body_text[i])
 #  print(json.contents$body_text[[i]]$text)
 #}
-```
 
-#### Process contents of a directory
-
-```{r parse.directory.contents}
-
-# NB NB NB: if there are more files in the directory than can be listed, you will get NAs for the file names. Consequently, I am limiting them by specifying their beginning, as well as their extension.  For example: ff*.json, rather than *.json
-directory.contents <- list.files("/Users/transfer/Dropbox/a-m/Corpora/cord19/noncomm_use_subset/", pattern = "ff*.json", full.names = TRUE)
-
-print(paste("Count of this subset of files:", as.character(length(directory.contents))))
-print(directory.contents[1:10])
-
-for (i in 1:length(directory.contents)) {
-  json.contents <- fromJSON(file = directory.contents[i])
-  if (DEBUG) {
-    print(paste("Paper ID:", json.contents$paper_id))
-  }
-  paper.id <- json.contents$paper_id
-  textual.contents <- get.json.text(json.contents, "TITLE")
-  file.name <- paste(output.directory, paper.id, sep = "")
-  output.to.text.file(textual.contents, file.name = file.name)
-}
 ```
 
 ## For reproducibility
