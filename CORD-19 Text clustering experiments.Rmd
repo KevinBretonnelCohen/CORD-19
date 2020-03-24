@@ -124,3 +124,28 @@ for (i in 2:5) {
 par(default.parameters) # gives me a bunch of warnings
 ```
 
+### Looking at the stability of k-means clustering results
+
+First hypothesis: no effect of varying _nstart_ across a range of values of _k_.
+
+```{r vary.nstart}
+library(cluster) # move this to set-up after development
+#default.parameters <- par()
+#par(mfrow=c(2,2))
+
+nstart.values <- c(25, 50, 75, 100)
+cluster.size.differences <- c()
+for (k.itself in 2:5) {
+  for (i in 1:length(nstart.values)) {}
+  kfit <- kmeans(d, k.itself, nstart=nstart.values[i])
+  cluster.size.difference <- kfit$size[1] - kfit$size[2]
+  cluster.size.differences <- c(cluster.size.differences, cluster.size.difference)
+  #plot – need library cluster
+  #clusplot(as.matrix(d), kfit$cluster, color=T, shade=T, labels=2, lines=0)
+}
+
+boxplot(cluster.size.differences)
+#par(default.parameters) # gives me a bunch of warnings
+```
+
+
