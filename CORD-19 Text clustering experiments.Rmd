@@ -66,6 +66,7 @@ write.csv(m,file="dtmEight2Late.csv")
 #+                      substring(rownames(m), #nchar(rownames(m))-12,nchar(rownames(m))-4))
 
                                  #compute distance between document vectors
+rownames(m) <- substring(rownames(m), 1, 5) # assuming that row names are at least 5 characters long! Holds true of the file names in the CORD0-19 corpus.
 d <- dist(m)
 ```
 
@@ -79,7 +80,13 @@ _Next we run hclust. The algorithm offers several options check out the document
 #run hierarchical clustering using Ward’s method
 groups <- hclust(d,method="ward.D")
 #plot dendogram, use hang to ensure that labels fall below tree
-plot(groups, hang=-1)
+plot(groups, hang=0, main = "Hang of 25") # trying 25
+plot(groups, hang=0, main = "Hang of -5") # trying -5
+plot(groups, hang=-1, main = "Hang of -1") # from the guy who wrote the code
+plot(groups, hang=0, main = "Hang of 0") # trying 0
+plot(groups, hang=5, main = "Hang of 5") # trying 5
+
+
 ```
 
 #### K-means clustering
