@@ -190,19 +190,37 @@ summary {
 <li>Clean up commented-out code</li>
 <li>Put directory path in variable for ease of use by others</li>
 </ul>
+<div id="utility-functions" class="section level3">
+<h3>Utility functions</h3>
+<div id="output-to-a-text-file" class="section level4">
+<h4>Output to a text file</h4>
+<pre class="r"><code># NB: if the directory already exists, it has to be manually emptied and deleted
+output.directory &lt;- &quot;/Users/transfer/Dropbox/Scripts-new/cord19output/&quot;
+dir.create(output.directory)
+output.to.text.file &lt;- function(textual.contents, file.name) {
+# code adapted from https://stackoverflow.com/questions/2470248/write-lines-of-text-to-a-file-in-r
+  
+  file.name &lt;- paste(file.name, &quot;.txt&quot;, sep = &quot;&quot;)
+  fileConn &lt;-file(file.name)
+  writeLines(textual.contents, fileConn)
+  close(fileConn)
+}</code></pre>
 </div>
-<div id="how-to-navigate-a-single-cord-19-json-file" class="section level2">
-<h2>How to navigate a single CORD-19 JSON file</h2>
+<div id="how-to-navigate-a-single-cord-19-json-file" class="section level4">
+<h4>How to navigate a single CORD-19 JSON file</h4>
 <pre class="r"><code># the argument json.contents is an rjson object containing the contents of a single file.
 # the argument section.to.get tells whether to get an individual section, or all.
 # values for section.to.get: TITLE, ABSTRACT, BODY, ALL
 #parse.single.file &lt;- function(json.contents, get.section) {
 get.json.text &lt;- function(json.contents, section.to.get) {
   
+  textual.contents &lt;- &quot;&quot;
+  
   # TODO: validate that section.to.get is one that we support
   if (section.to.get == &quot;TITLE&quot; || section.to.get == &quot;ALL&quot;) {
     if (DEBUG) {
       print(json.contents$metadata$title)
+      textual.contents &lt;- paste(textual.contents, json.contents$metadata$title)
     }
   }
 
@@ -218,6 +236,7 @@ get.json.text &lt;- function(json.contents, section.to.get) {
         print(&quot;*********%%%%%%%%%%% ABSTRACT ABSTRACT ABSTRACT %%%%%%%%%%%%%*********&quot;)
         print(json.contents$abstract[[j]]$text)
       }
+      textual.contents &lt;- paste(textual.contents, json.contents$abstract[[j]]$text)
     } # close for-loop through abstract contents
   } # close if-length-greater-than-0
   }
@@ -230,9 +249,11 @@ get.json.text &lt;- function(json.contents, section.to.get) {
         #print(json.contents$body_text[i])
         print(json.contents$body_text[[i]]$text)
       }
+      textual.contents &lt;- paste(json.contents$body_text[[i]]$text)
     } # close for-loop through body
 
   } # close if-body
+  return(textual.contents)
 } # close function definition
 
 # no abstract
@@ -281,9 +302,10 @@ get.json.text &lt;- function(json.contents, section.to.get) {
 #  #print(json.contents$body_text[i])
 #  print(json.contents$body_text[[i]]$text)
 #}</code></pre>
-<pre class="r"><code>#directory.contents &lt;- list.files(path = &quot;/Users/transfer/Dropbox/a-m/Corpora/cord19/noncomm_use_subset/ff*.json&quot;, full.names = TRUE, recursive = TRUE)
-#directory.contents &lt;- list.files(&quot;/Users/transfer/Dropbox/a-m/Corpora/cord19/noncomm_use_subset/*.json&quot;)
-# NB NB NB: if there are more files in the directory than can be listed, you will get NAs for the file names. Consequently, I am limiting them by specifying their beginning, as well as their extension.  For example: ff*.json, rather than *.json
+</div>
+<div id="process-contents-of-a-directory" class="section level4">
+<h4>Process contents of a directory</h4>
+<pre class="r"><code># NB NB NB: if there are more files in the directory than can be listed, you will get NAs for the file names. Consequently, I am limiting them by specifying their beginning, as well as their extension.  For example: ff*.json, rather than *.json
 directory.contents &lt;- list.files(&quot;/Users/transfer/Dropbox/a-m/Corpora/cord19/noncomm_use_subset/&quot;, pattern = &quot;ff*.json&quot;, full.names = TRUE)
 
 print(paste(&quot;Count of this subset of files:&quot;, as.character(length(directory.contents))))</code></pre>
@@ -300,163 +322,325 @@ print(paste(&quot;Count of this subset of files:&quot;, as.character(length(dire
 ##  [9] &quot;/Users/transfer/Dropbox/a-m/Corpora/cord19/noncomm_use_subset//105b993dee9f9e44637daa2d43e66f3ba3039fbf.json&quot;
 ## [10] &quot;/Users/transfer/Dropbox/a-m/Corpora/cord19/noncomm_use_subset//14c6f99cf0ec54c78447ad5a8403e3ee2708176f.json&quot;</code></pre>
 <pre class="r"><code>for (i in 1:length(directory.contents)) {
-  json.contents &lt;- fromJSON(file = directory.contents[i]) 
-  get.json.text(json.contents, &quot;TITLE&quot;)
+  json.contents &lt;- fromJSON(file = directory.contents[i])
+  if (DEBUG) {
+    print(paste(&quot;Paper ID:&quot;, json.contents$paper_id))
+  }
+  paper.id &lt;- json.contents$paper_id
+  textual.contents &lt;- get.json.text(json.contents, &quot;TITLE&quot;)
+  file.name &lt;- paste(output.directory, paper.id, sep = &quot;&quot;)
+  output.to.text.file(textual.contents, file.name = file.name)
 }</code></pre>
-<pre><code>## [1] &quot;&quot;
+<pre><code>## [1] &quot;Paper ID: 029440dede483511b869a1a8ac39a7b53e5cc22f&quot;
+## [1] &quot;&quot;
+## [1] &quot;Paper ID: 02f267368636c422f19d77d3be96de3c0dcbceef&quot;
 ## [1] &quot;Hybridization properties of long nucleic acid probes for detection of variable target sequences, and development of a hybridization prediction algorithm&quot;
+## [1] &quot;Paper ID: 069695d115517cbd0e713fb44245be7a6226bc7f&quot;
 ## [1] &quot;Studies of nonhuman primates: key sources of data on zoonoses and microbiota&quot;
+## [1] &quot;Paper ID: 06c89f69aa7b5f9648d2c1543b8246fe9c3610cf&quot;
 ## [1] &quot;Pathogenicity and transmissibility of 2019-nCoVdA quick overview and comparison with other emerging viruses&quot;
+## [1] &quot;Paper ID: 091b857ba8a07eca145ae411f7202ca3a4d970df&quot;
 ## [1] &quot;Therapeutics and Clinical Risk Management Dovepress virus-induced secondary bacterial infection: a concise review&quot;
+## [1] &quot;Paper ID: 0b90f302993b075229dbe5f9bc03a180b2e2632f&quot;
 ## [1] &quot;MOUSE HEPATITIS VIRUS TYPE 4 (JHM STRAIN)- INDUCED FATAL CENTRAL NERVOUS SYSTEM DISEASE I. Genetic Control and the Murine Neuron as the Susceptible Site of Disease*&quot;
+## [1] &quot;Paper ID: 0cf8f70367fc77ea444519b2d9ed108765edd25f&quot;
 ## [1] &quot;case report&quot;
+## [1] &quot;Paper ID: 0e26889f9cffa6531cfef5b27d1f09734d98333f&quot;
 ## [1] &quot;Undressing of Waddlia chondrophila to enrich its outer membrane proteins to develop a new species-specific ELISA&quot;
+## [1] &quot;Paper ID: 105b993dee9f9e44637daa2d43e66f3ba3039fbf&quot;
 ## [1] &quot;Mechanisms of viral emergence&quot;
+## [1] &quot;Paper ID: 14c6f99cf0ec54c78447ad5a8403e3ee2708176f&quot;
 ## [1] &quot;Contributions of international cooperation projects to the HIV/AIDS response in China&quot;
+## [1] &quot;Paper ID: 14e878a6400d8320e2c781a76edc4a14f4cec1df&quot;
 ## [1] &quot;Viral etiology of acute respiratory infections in pediatric patients in Lebanon&quot;
+## [1] &quot;Paper ID: 157d6b204fdc9b7ea26cdbffea19197b0faaa31f&quot;
 ## [1] &quot;AND MACROPHAGES FROM GENETICALLY RESISTANT MICE II. BIOLOGICAL CHARACTERIZATION OF A VARIANT VIRUS MHV(CsH) ISOLATED FROM STOCKS OF MHV(PRI)&quot;
+## [1] &quot;Paper ID: 1685a03eac1fe5f949aa6b7889e02dadf9d3f90f&quot;
 ## [1] &quot;Identification of RNase L-Dependent, 3=-End-Modified, Viral Small RNAs in Sindbis Virus-Infected Mammalian Cells&quot;
+## [1] &quot;Paper ID: 1694b4f8e456f966ff1fe215161bae59e59148df&quot;
 ## [1] &quot;&quot;
+## [1] &quot;Paper ID: 1ca4dc2cbd2171a1b471d103caa4bb5d1f057eef&quot;
 ## [1] &quot;A Randomized Clinical Trial Evaluating Metabolism of Colostral and Plasma Derived Immunoglobulin G in Jersey Bull Calves&quot;
+## [1] &quot;Paper ID: 1ce4231aeefd5ac1caef8246df9984b7455d16df&quot;
 ## [1] &quot;&quot;
+## [1] &quot;Paper ID: 1cfcdcf2a3783b9adba2b091bd50c5d8ac3252ff&quot;
 ## [1] &quot;International Journal of Nanomedicine Dovepress Antiviral efficacy of nanoparticulate vacuolar ATPase inhibitors against influenza virus infection&quot;
+## [1] &quot;Paper ID: 1d81eea0f16b71d643336838cd22e51125bf05ef&quot;
 ## [1] &quot;Interaction of the HIV-1 frameshift signal with the ribosome&quot;
+## [1] &quot;Paper ID: 23b89b2ee6a5870dd94c479b892cda6a54c8ab6f&quot;
 ## [1] &quot;Intermediates in the Constitutive and Regulated Secretory Pathways Released In Vitro from Semi-intact Cells&quot;
+## [1] &quot;Paper ID: 246f59ddffedd4a166b9317dee38bdf6077b2f3f&quot;
 ## [1] &quot;Identification of novel multitargeted PPARα/γ/δ pan agonists by core hopping of rosiglitazone&quot;
+## [1] &quot;Paper ID: 254c09779d5d51cd41becfb1ef4d3fcb08a0ba8f&quot;
 ## [1] &quot;The CEACAM1 N-terminal Ig domain mediates cis-and trans-binding and is essential for allosteric rearrangements of CEACAM1 microclusters&quot;
+## [1] &quot;Paper ID: 25a10dcacb257ac926ad42124f605189b3789d3f&quot;
 ## [1] &quot;Research Communications of the 24th ECVIM-CA Congress Research Communications of the 24th ECVIM-CA Congress Rheingoldhalle in Mainz&quot;
+## [1] &quot;Paper ID: 264fb27c70d421557131f4ec462c56c8378217ef&quot;
 ## [1] &quot;Impaired inflammasome activation and bacterial clearance in G6PD deficiency due to defective NOX/p38 MAPK/AP-1 redox signaling&quot;
+## [1] &quot;Paper ID: 26b49bdf0c3d50386ae603783e9674b7349852df&quot;
 ## [1] &quot;Primary Sequence Domains Required for the Retention of Rotavirus VP7 in the Endoplasmic Reticulum&quot;
+## [1] &quot;Paper ID: 27ee5b4647398fd11e7044166a9d68aca391ebcf&quot;
 ## [1] &quot;Send Orders for Reprints to reprints@benthamscience.ae Cellular Antiviral Factors that Target Particle Infectivity of HIV-1&quot;
+## [1] &quot;Paper ID: 2cf60380bb05becd140053f71fa4cc4e4eaa0d5f&quot;
 ## [1] &quot;PATRIC: The VBI PathoSystems Resource Integration Center&quot;
+## [1] &quot;Paper ID: 310e6155d1d7856c824b0304dea2ca5ec637c2bf&quot;
 ## [1] &quot;Helicobacter pylori VacA Suppresses Lactobacillus acidophilus-Induced Interferon Beta Signaling in Macrophages via Alterations in the Endocytic Pathway&quot;
+## [1] &quot;Paper ID: 349104eb16d3c08e212c6ee78230d8778621c40f&quot;
 ## [1] &quot;Estimation of the reproductive number of novel coronavirus (COVID-19) and the probable outbreak size on the Diamond Princess cruise ship: A data-driven analysis&quot;
+## [1] &quot;Paper ID: 35ec885b13ad96752433a085e543db81dd1d80df&quot;
 ## [1] &quot;Emerging Microbes and Infections (2012) 1, e35&quot;
+## [1] &quot;Paper ID: 3c0c493a037dacafd2eda2e37518e0f0dff7955f&quot;
 ## [1] &quot;2009 H1N1 Influenza and Experience in Three Critical Care Units&quot;
+## [1] &quot;Paper ID: 3f65b990d1f24de2bf3cd52d8559e8ccba9961af&quot;
 ## [1] &quot;&quot;
+## [1] &quot;Paper ID: 4090c4a0e8cead64dd9e44a1610fb4f557fefdcf&quot;
 ## [1] &quot;Unported License October 2018 | 140 | e58110 |&quot;
+## [1] &quot;Paper ID: 40b2b0e3d2cf519723d858a138e77a26a70f460f&quot;
 ## [1] &quot;&quot;
+## [1] &quot;Paper ID: 47772f3e98d8c61bb9782531a0338ba85f27bf3f&quot;
 ## [1] &quot;Potential for global spread of a novel coronavirus from China&quot;
+## [1] &quot;Paper ID: 4a8852f2970eadd44d677311548ca6eea1c5079f&quot;
 ## [1] &quot;Editorial Commentary&quot;
+## [1] &quot;Paper ID: 4e2387a88720584e25e0f6418be2491523e288af&quot;
 ## [1] &quot;Coronavirus NSP6 restricts autophagosome expansion&quot;
+## [1] &quot;Paper ID: 4ee0f8eb93dda0ff3512556fbb784c3859cc156f&quot;
 ## [1] &quot;Jet set pets: examining the zoonosis risk in animal import and travel across the european Union&quot;
+## [1] &quot;Paper ID: 5088c438f1abf85269f0baa73779d6b7000fc10f&quot;
 ## [1] &quot;Waterpipe smoking as a public health risk: Potential risk for transmission of MERS-CoV-NC-ND license (http://creativecommons.org/licenses/by-nc-nd/4.0/)&quot;
+## [1] &quot;Paper ID: 5157ee00e0ee6c807ca321c405baf2d8b9bd8a4f&quot;
 ## [1] &quot;CD8 + T cells in Leishmania infections: friends or foes?&quot;
+## [1] &quot;Paper ID: 517698251b94fac6d80edcc4644e2448a4efd4ef&quot;
 ## [1] &quot;Improved Algorithmic Complexity for the 3SEQ Recombination Detection Algorithm&quot;
+## [1] &quot;Paper ID: 52e323d1ed2d4a0dfbe4f68d15d20430a33de8bf&quot;
 ## [1] &quot;Acute Lung Injury Results from Innate Sensing of Viruses by an ER Stress Pathway Article Acute Lung Injury Results from Innate Sensing of Viruses by an ER Stress Pathway&quot;
+## [1] &quot;Paper ID: 543ac2431685616436dfe9f7ff063a02a741686f&quot;
 ## [1] &quot;Efficacy of an orally administered anti-diarrheal probiotic paste (Pro-Kolin Advanced) in dogs with acute diarrhea: A randomized, placebo-controlled, double-blinded clinical study&quot;
+## [1] &quot;Paper ID: 545cc28cf80d7f18232d1eafdcd3a7e9680a4b9f&quot;
 ## [1] &quot;Specific interference shRNA-expressing plasmids inhibit Hantaan virus infection in vitro and in vivo&quot;
+## [1] &quot;Paper ID: 54e77bff1912076bccf12a6b099e48a59f634d5f&quot;
 ## [1] &quot;Supplementary Material and Methods&quot;
+## [1] &quot;Paper ID: 58ef15f083c00ee3ae8e604a9c6e258576b7c7af&quot;
 ## [1] &quot;Multitask learning for host-pathogen protein interactions&quot;
+## [1] &quot;Paper ID: 5c08aea2dc326afc98c4359cf5f35951d13c09af&quot;
 ## [1] &quot;The enzymatic biosynthesis of acylated steroidal glycosides and their cytotoxic activity&quot;
+## [1] &quot;Paper ID: 5dd80841cfa8fbf952df8516dd9ff3e4233b977f&quot;
 ## [1] &quot;The First Membrane Spanning Region of the Lamin B Receptor Is Sufficient for Sorting to the Inner Nuclear Membrane&quot;
+## [1] &quot;Paper ID: 5ea02beeb65f975de027e3b6fedc6b239e9f2e8f&quot;
 ## [1] &quot;A Universal Protein Tag for Delivery of SiRNA-Aptamer Chimeras&quot;
+## [1] &quot;Paper ID: 5f0c15243c5c788ea3051a39a868e0706d2bae7f&quot;
 ## [1] &quot;Safety studies conducted on pecan shell fiber, a food ingredient produced from ground pecan shells&quot;
+## [1] &quot;Paper ID: 5f56a9b712608c599a21191b06b78bfa70ad523f&quot;
 ## [1] &quot;Long non-coding RNA MEG3 attends to morphine-mediated autophagy of HT22 cells through modulating ERK pathway&quot;
+## [1] &quot;Paper ID: 5f88b4180ba190e37e27776b11432d61770529ef&quot;
 ## [1] &quot;IMIA Yearbook of Medical Informatics 2018 207 Artificial Intelligence in Public Health and Epidemiology&quot;
+## [1] &quot;Paper ID: 5fbe76b0ae7ef869d483dfa3844a8d4f66f65c8f&quot;
 ## [1] &quot;The battle against SARS and MERS coronaviruses: Reservoirs and Animal Models&quot;
+## [1] &quot;Paper ID: 601d3c7ae4ebcd2d835e9cf8d7427ebd0b5db83f&quot;
 ## [1] &quot;Nonstructural proteins NS7b and NS8 are likely to be phylogenetically associated with evolution of 2019-nCoV&quot;
+## [1] &quot;Paper ID: 6214d0592f9322221375a64360716a1cae0add5f&quot;
 ## [1] &quot;Tissue Barriers 1:4, e24997&quot;
+## [1] &quot;Paper ID: 632bcacf9702ee34c5424827ab7e5449dd21ddcf&quot;
 ## [1] &quot;First Report of Respiratory Syncytial Virus and Human Metapneumovirus Co-Infection in a 2-Year-Old Kawasaki Patient in Iran&quot;
+## [1] &quot;Paper ID: 643f2dd329f342e9e85753ab315722bc1120d0ef&quot;
 ## [1] &quot;PGHN Case Report Pediatric Mycoplasma pneumoniae Infection Presenting with Acute Cholestatic Hepatitis and Other Extrapulmonary Manifestations in the Absence of Pneumonia&quot;
+## [1] &quot;Paper ID: 64d31d4587a86108556e52c45e1ea3750fa7303f&quot;
 ## [1] &quot;&quot;
+## [1] &quot;Paper ID: 66ee6c750afeb7f2f0ae49100a5b3c08f91dc2bf&quot;
 ## [1] &quot;&quot;
+## [1] &quot;Paper ID: 67629939944591734aa3934d4a2c9aadf49ccedf&quot;
 ## [1] &quot;Global Health and Foreign Policy&quot;
+## [1] &quot;Paper ID: 67a530bb1b7075edffe904df66644b0a1da97d1f&quot;
 ## [1] &quot;&quot;
+## [1] &quot;Paper ID: 6a8c08ae03b9b8ed7a4c766dddae85a7448f01df&quot;
 ## [1] &quot;A systematic review on silver nanoparticles-induced cytotoxicity: Physicochemical properties and perspectives-NC-ND license (http://creativecommons.org/licenses/by-nc-nd/4.0/)&quot;
+## [1] &quot;Paper ID: 6aaf920479e8c440f99cd8a14a3e9ebd9250d15f&quot;
 ## [1] &quot;The human Transmembrane Protease Serine 2 is necessary for the production of Group 2 influenza A virus pseudotypes&quot;
+## [1] &quot;Paper ID: 6f64870ea0f8f51525b16926dc6dbb42911f850f&quot;
 ## [1] &quot;&quot;
+## [1] &quot;Paper ID: 70549fd773d28dfe6e47cbc51775b61c1816003f&quot;
 ## [1] &quot;Fitting dynamic models to epidemic outbreaks with quantified uncertainty: A primer for parameter uncertainty, identifiability, and forecasts-NC-ND license (http:// creativecommons.org/licenses/by-nc-nd/4.0/)&quot;
+## [1] &quot;Paper ID: 71b5ffbc04fa339eed42ead8bb5dd1bf0e471b8f&quot;
 ## [1] &quot;Yukie KATAYAMA 2) , Mami OBA 2) , Naomi NISHIURA 2) , Yukiko SASSA 2) , Tsutomu OMATSU 2) , Tetsuya FURUYA 2,4) , Satoshi KOYAMA 5)&quot;
+## [1] &quot;Paper ID: 725f0a6590f20c15be0ae719463c0624a34ee1af&quot;
 ## [1] &quot;Mechanism of Cxc Chemokine Ligand 5 (CXCL5)/ Cxc Chemokine Receptor 2 (CXCR2) Bio-Axis in Mice with Acute Respiratory Distress Syndrome This work is licensed under Creative Common Attribution- NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)&quot;
+## [1] &quot;Paper ID: 766b9c02fdb5aaeee2c3a399ae9a6d5e179eca8f&quot;
 ## [1] &quot;Biocontainment in Gain-of-Function Infectious Disease Research&quot;
+## [1] &quot;Paper ID: 76d2990a2663635e195b8a9818f9664872b6d3af&quot;
 ## [1] &quot;Metagenomic Assay for Identification of Microbial Pathogens in Tumor Tissues&quot;
+## [1] &quot;Paper ID: 786282089d03a2eaed7139f503755faa30dd741f&quot;
 ## [1] &quot;Impact of Middle East respiratory syndrome outbreak on the use of emergency medical resources in febrile patients&quot;
+## [1] &quot;Paper ID: 793bb8ec176e4a5df8323e0bd2276e134b958b5f&quot;
 ## [1] &quot;Differentiated human airway organoids to assess infectivity of emerging influenza virus&quot;
+## [1] &quot;Paper ID: 7b0abf2414de3794e54ed37050884f636333972f&quot;
 ## [1] &quot;What We Are Watching-Top Global Infectious Disease Threats, 2013-2016: An Update from CDC's Global Disease Detection Operations Center&quot;
+## [1] &quot;Paper ID: 7d3facc82a83039b3871ebb8a299bcdb9700156f&quot;
 ## [1] &quot;Crystal structure and activity-based labeling reveal the mechanisms for linkage-specific substrate recognition by deubiquitinase USP9X&quot;
+## [1] &quot;Paper ID: 7d7bab4809a66048899e1e95227eb5d72e46818f&quot;
 ## [1] &quot;Unifying evolutionary and thermodynamic information for RNA folding of multiple alignments Supporting Information SCFG for the Pfold model&quot;
+## [1] &quot;Paper ID: 7e1d33cf80c62e4e7de67f8beb280c86266b887f&quot;
 ## [1] &quot;Highly dynamic animal contact network and implications on disease transmission&quot;
+## [1] &quot;Paper ID: 7e92581ed1b5f05b3002790d3cd71974982f7a3f&quot;
 ## [1] &quot;Emerging Microbes and Infections (2012) 1, e13&quot;
+## [1] &quot;Paper ID: 801bdee04f820908695b58d1d23a04d3ecbf103f&quot;
 ## [1] &quot;Finding equipoise: CEPI revises its equitable access policy&quot;
+## [1] &quot;Paper ID: 80786183397e485664fd049d086f6e3e38ba210f&quot;
 ## [1] &quot;&quot;
+## [1] &quot;Paper ID: 82e80640af0a98cc07c911c9476f693c5e9a62cf&quot;
 ## [1] &quot;Complete Genome Sequences of the SARS-CoV: the BJ Group (Iso- lates BJ01-BJ04)&quot;
+## [1] &quot;Paper ID: 83303635687128ac583152565ba1d7e29540f2af&quot;
 ## [1] &quot;Health care-associated infections -an overview&quot;
+## [1] &quot;Paper ID: 84a328211fa0a65959af45f0e55e52961c00005f&quot;
 ## [1] &quot;Oxidized LDL upregulates macrophage DPP4 expression via TLR4/TRIF/CD36 pathways-NC-ND license (http:// creativecommons.org/licenses/by-nc-nd/4.0/)&quot;
+## [1] &quot;Paper ID: 84c2f00555536eb03aedc2225769f3b1ac59d94f&quot;
 ## [1] &quot;Evaluation of acute and sublethal effects of chloroquine (C 18 H 26 CIN 3 ) on certain enzymological and histopathological biomarker responses of a freshwater fish Cyprinus carpio&quot;
+## [1] &quot;Paper ID: 85c04886b69b27eeddd4a72c74e2e1727a80598f&quot;
 ## [1] &quot;CoVDB: a comprehensive database for comparative analysis of coronavirus genes and genomes&quot;
+## [1] &quot;Paper ID: 8834037938bd709903ef25732dbcfd5ea681a0cf&quot;
 ## [1] &quot;Steroid-associated osteonecrosis animal model in rats&quot;
+## [1] &quot;Paper ID: 894e9a681490af51667a059d727a9cce8dddbf7f&quot;
 ## [1] &quot;Complement-Mediated Neutralization of Dengue Virus Requires Mannose-Binding Lectin&quot;
+## [1] &quot;Paper ID: 8bf17efaaca3885956b262ec027b83e86cc1711f&quot;
 ## [1] &quot;NOTE Rapid detection and differentiation of avian infectious bronchitis virus: an application of Mass genotype by melting temperature analysis in RT-qPCR using SYBR Green I&quot;
+## [1] &quot;Paper ID: 8c183a5df571437f64c3dd78c8e7f5999de86cdf&quot;
 ## [1] &quot;vaccines) in public health emergencies&quot;
+## [1] &quot;Paper ID: 8f4348a9455035db6487252e4fb48c65708a1e1f&quot;
 ## [1] &quot;Biochemical Studies on Cell Fusion. II. Control of Fusion Response by Lipid Alteration&quot;
+## [1] &quot;Paper ID: 8fc2cebc69f892528d29293bc14ba94237cfd77f&quot;
 ## [1] &quot;Emerging threats from zoonotic coronaviruses-from SARS and MERS to 2019-nCoV&quot;
+## [1] &quot;Paper ID: 904d886a8a305e2bc1125fccad82741d78690fef&quot;
 ## [1] &quot;&quot;
+## [1] &quot;Paper ID: 905e2b35719215760ebed8f3e93fdf6ea8ec9bcf&quot;
 ## [1] &quot;Surgical Transplantation of Mouse Neural Stem Cells into the Spinal Cords of Mice Infected with Neurotropic Mouse Hepatitis Virus&quot;
+## [1] &quot;Paper ID: 90cc93e5eac1e836f5cbce50fe92ded531045abf&quot;
 ## [1] &quot;A novel synthesis and detection method for cap-associated adenosine modifications in mouse mRNA&quot;
+## [1] &quot;Paper ID: 9104c8bed3340e783a7a0a820ff269711f39bc8f&quot;
 ## [1] &quot;Nivolumab-induced Myocarditis Successfully Treated with Corticosteroid Therapy: A Case Report and Review of the Literature&quot;
+## [1] &quot;Paper ID: 91abd69ad1b79240b58ffdfbce651e6980dca5bf&quot;
 ## [1] &quot;NOTE Preparation of a cell line persistently infected with maedi/visna virus and production of viral antigens&quot;
+## [1] &quot;Paper ID: 921c3701d112c1aeef737e5d395e9996a81b9bff&quot;
 ## [1] &quot;&quot;
+## [1] &quot;Paper ID: 92aca69f518fc394bd00b525898264893d9550af&quot;
 ## [1] &quot;Interferon-Stimulated Gene 15 in the Control of Cellular Responses to Genotoxic Stress&quot;
+## [1] &quot;Paper ID: 974de2ddd9575e32633a8038613f4e8f4333a70f&quot;
 ## [1] &quot;Chloroquine use improves dengue-related symptoms&quot;
+## [1] &quot;Paper ID: 9755d086cd6dd791df77966693b76dd19744d11f&quot;
 ## [1] &quot;Articles 500 www&quot;
+## [1] &quot;Paper ID: 9b91bf56210db60e68b22d502496e4b20e80ff3f&quot;
 ## [1] &quot;Clinical risk factors associated with the develop ment of wheezing in children less than 2 years of age who required hospitalization for viral lower respiratory tract infections&quot;
+## [1] &quot;Paper ID: a0e5f386820398978cd41131434313e6d70bcfff&quot;
 ## [1] &quot;Widening participation would be key in enhancing bioinformatics and genomics research in Africa-NC-ND license (http://creativecommons.org/licenses/by-nc-nd/4.0/)&quot;
+## [1] &quot;Paper ID: a20ac7b01ea008ea43804434b4dfba43d841f9cf&quot;
 ## [1] &quot;&quot;
+## [1] &quot;Paper ID: a633596dc4ee28692afaa88122c65b997d1e4d1f&quot;
 ## [1] &quot;Potential and challenges of tannins as an alternative to in-feed antibiotics for farm animal production-NC-ND license (http://creativecommons.org/licenses/by-nc-nd/4.0/)&quot;
+## [1] &quot;Paper ID: a6937f983f10f9d99250c82204812331222557ff&quot;
 ## [1] &quot;Translation of Angiotensin-Converting Enzyme 2 upon Liver-and Lung-Targeted Delivery of Optimized Chemically Modified mRNA&quot;
+## [1] &quot;Paper ID: a8dd4ad790014376cbea595be02bc5cade42104f&quot;
 ## [1] &quot;Infection &amp; Chemotherapy&quot;
+## [1] &quot;Paper ID: aada914c9454237bad1a0dd33ae257e8f9d2ca2f&quot;
 ## [1] &quot;Community-Based Risk Communication Survey: Risk Prevention Behaviors in Communities during the H1N1 crisis, 2010&quot;
+## [1] &quot;Paper ID: ad9ac0ac5e7da097253fd545b56e2b15ee9de34f&quot;
 ## [1] &quot;Molecular dynamics simulations of human tRNA Lys,3 UUU : the role of modified bases in mRNA recognition&quot;
+## [1] &quot;Paper ID: ae8ccebf81f9909e96af7c707cca66e5ed716b1f&quot;
 ## [1] &quot;Lack of detection of Middle East respiratory syndrome coronavirus in mild and severe respiratory infections in Catalonia, northeastern Spain&quot;
+## [1] &quot;Paper ID: b16173612f53649fbd4db78654874bee5d4d607f&quot;
 ## [1] &quot;OncoImmunology e22978-1 OncoImmunology 2:1, e22978&quot;
+## [1] &quot;Paper ID: b411e12b20d883ef2ee5ca19d48eff9fccedf05f&quot;
 ## [1] &quot;CVTree update: a newly designed phylogenetic study platform using composition vectors and whole genomes&quot;
+## [1] &quot;Paper ID: b4515c6c41499802974aa06066464a3d23efc48f&quot;
 ## [1] &quot;Challenges presented by MERS corona virus, and SARS corona virus to global health&quot;
+## [1] &quot;Paper ID: b891efc6e1419713b05ff7d89b26d260478c28df&quot;
 ## [1] &quot;&quot;
+## [1] &quot;Paper ID: b9e6621f5b788746ecf6f648b00844b10634d43f&quot;
 ## [1] &quot;&amp; Carbohydrates On-Chip Screening of aG lycomimetic Library with C-Type Lectins Reveals Structural Features Responsible for Preferential Binding of Dectin-2 overD C-SIGN/R and Langerin&quot;
+## [1] &quot;Paper ID: baa537985930872fc2fd9fe0865ab810cf978b6f&quot;
 ## [1] &quot;Shiga toxin-producing Escherichia coli (STEC) isolated from fecal samples of African dromedary camels&quot;
+## [1] &quot;Paper ID: bfa1dab8c91f41f59df39489115a8b2e19e537bf&quot;
 ## [1] &quot;Transcriptomic Characterization of the Novel Avian-Origin Influenza A (H7N9) Virus: Specific Host Response and Responses Intermediate between Avian (H5N1 and H7N7) and Human (H3N2) Viruses and Implications for Treatment Options&quot;
+## [1] &quot;Paper ID: c042a8ca113beaec285ea086b0d1722eb838115f&quot;
 ## [1] &quot;Interleukin-18 expression and the response to treatment in patients with psoriasis&quot;
+## [1] &quot;Paper ID: c055818c61327ee072c403cb911793c9c49ca7bf&quot;
 ## [1] &quot;Effect of Antigen/Antibody Ratio on Macrophage Uptake, Processing, and Presentation to T Cells of Antigen Complexed with Polyclonal Antibodies&quot;
+## [1] &quot;Paper ID: c3a6451d69ba69ded9a9e9683d2668237482399f&quot;
 ## [1] &quot;Th17 profile in COPD exacerbations&quot;
+## [1] &quot;Paper ID: c4bffc76026b935fe454f98878510ab490e75bff&quot;
 ## [1] &quot;ALV-J strain SCAU-HN06 induces innate immune responses in chicken primary monocyte-derived macrophages&quot;
+## [1] &quot;Paper ID: c62c030b2ee83baf4f5390cdb28f32f6bce71edf&quot;
 ## [1] &quot;A pandemic risk assessment of middle east respiratory syndrome coronavirus (MERS-CoV) in Saudi Arabia&quot;
+## [1] &quot;Paper ID: c63f31f1d46c5a3cd4d4f2baeab9ce8c3a1dd3bf&quot;
 ## [1] &quot;&quot;
+## [1] &quot;Paper ID: c93f00ba900315d3b2ac23258d8ab75d63d366cf&quot;
 ## [1] &quot;Shiga toxin-producing Escherichia coli (STEC) isolated from fecal samples of African dromedary camels&quot;
+## [1] &quot;Paper ID: cb62f467ee641118d0b7d0b6244c6f7aa800416f&quot;
 ## [1] &quot;Roles of N-Myc and STAT Interactor in Cancer: From Initiation to Dissemination&quot;
+## [1] &quot;Paper ID: d095e5dd57f0cce04d19b803d2eff03b87febf8f&quot;
 ## [1] &quot;Overproduction of IL-6 and Type-I IFN in a Lethal Case of Chikungunya Virus Infection in an Elderly Man During the 2017 Italian Outbreak&quot;
+## [1] &quot;Paper ID: d230ca9dcc54e1d5c0ed4503752774eb44711dff&quot;
 ## [1] &quot;Role of RNA helicases in HIV-1 replication&quot;
+## [1] &quot;Paper ID: d233d152df533dd90a4441a904c1652244ee5aaf&quot;
 ## [1] &quot;Clinical predictors of chest radiographic abnor malities in young children hospitalized with bronchiolitis: a single center study&quot;
+## [1] &quot;Paper ID: d25529180f950874e0b4f62a976959d683a2ceaf&quot;
 ## [1] &quot;Amino acid residues critical for RNA-binding in the N-terminal domain of the nucleocapsid protein are essential determinants for the infectivity of coronavirus in cultured cells&quot;
+## [1] &quot;Paper ID: d666c86af7eeaee9a830f99d863045f52571ea5f&quot;
 ## [1] &quot;&quot;
+## [1] &quot;Paper ID: daf06fe518af2567566bd71fca278c8bc5fecddf&quot;
 ## [1] &quot;Human Mig Chemokine: Biochemical and Functional Characterization&quot;
+## [1] &quot;Paper ID: db633ad6a8771828545a8f3d7419722897c4fa9f&quot;
 ## [1] &quot;&quot;
+## [1] &quot;Paper ID: dd0863296aa29156993cde032a4f7f42f5133fff&quot;
 ## [1] &quot;Autocrine Interferon Priming in Macrophages but Not Dendritic Cells Results in Enhanced Cytokine and Chemokine Production after Coronavirus Infection&quot;
+## [1] &quot;Paper ID: dec136aeb4b48f3a2f506fa208d892cbe3ccd4af&quot;
 ## [1] &quot;&quot;
+## [1] &quot;Paper ID: df62b9ff3b2b95896d4b90ccefc9f3d756be1abf&quot;
 ## [1] &quot;Emergency treatment and nursing of children with severe pneumonia complicated by heart failure and respiratory failure: 10 case reports&quot;
+## [1] &quot;Paper ID: e0981e6148fcddc3856151ebf5d7f99539c87bbf&quot;
 ## [1] &quot;Stochastic and spatio-temporal analysis of the Middle East Respiratory Syndrome outbreak in South Korea, 2015-NC-ND license (http://creativecommons.org/licenses/by-nc-nd/4.0/)&quot;
+## [1] &quot;Paper ID: e0c0c5277a24320d44e9b356e13c5801dad521af&quot;
 ## [1] &quot;Discovery of a divergent HPIV4 from respiratory secretions using second and third generation metagenomic sequencing&quot;
+## [1] &quot;Paper ID: e1b312167d5ea6a1ed3c071b05b7bd0a48a975df&quot;
 ## [1] &quot;Structural Factors of the Middle East Respiratory Syndrome Coronavirus Outbreak as a Public Health Crisis in Korea and Future Response Strategies&quot;
+## [1] &quot;Paper ID: e484923f000ae4706e2213031654865cef348def&quot;
 ## [1] &quot;Treatment strategies for Middle East respiratory syndrome coronavirus&quot;
+## [1] &quot;Paper ID: eac8ac161c5889bb47d90400f3bc2fb1ab32f3ff&quot;
 ## [1] &quot;Clinical findings and treatment of disseminated 'Mycobacterium avium subspecies hominissuis' infection in a domestic cat&quot;
+## [1] &quot;Paper ID: eaeab732c9c3e204526d8e1ea34cf40e7f37731f&quot;
 ## [1] &quot;Plasma and tissue angiotensin-converting enzyme 2 activity and plasma equilibrium concentrations of angiotensin peptides in dogs with heart disease&quot;
+## [1] &quot;Paper ID: ec0a48de352326aecc319e76ea1f47b989ffcd8f&quot;
 ## [1] &quot;INDUCIBILITY OF la ANTIGEN ON ASTROCYTES BY MURINE CORONAVIRUS JHM IS RAT STRAIN DEPENDENT&quot;
+## [1] &quot;Paper ID: ecd341e70316d124587fb8370d949fbf5524bd2f&quot;
 ## [1] &quot;Single-dose treatment with a humanized neutralizing antibody affords full protection of a human transgenic mouse model from lethal Middle East respiratory syndrome (MERS)-coronavirus infection HHS Public Access&quot;
+## [1] &quot;Paper ID: ed94f0bd0fe17c099f8cdff4bf9edbbd29ebf41f&quot;
 ## [1] &quot;Infection and Drug Resistance Dovepress structural basis of development of multi-epitope vaccine against Middle east respiratory syndrome using in silico approach&quot;
+## [1] &quot;Paper ID: ee106840a4b1667303e4b84d25795de3617bd7ef&quot;
 ## [1] &quot;&quot;
+## [1] &quot;Paper ID: f12dac6dd672f51fbf89bec56df7f7a8af5331df&quot;
 ## [1] &quot;Pathological and ultrastructural analysis of surgical lung biopsies in patients with swine-origin influenza type A/H1N1 and acute respiratory failure&quot;
+## [1] &quot;Paper ID: f266600e61a8c0fbceb48929b7250a9f16771c9f&quot;
 ## [1] &quot;&quot;
+## [1] &quot;Paper ID: f477cb32c61ef1a690f4b9afe74d38f8e147f39f&quot;
 ## [1] &quot;Federal Interagency Interactions During Outbreaks of H7N9 Influenza and MERS-CoV&quot;
+## [1] &quot;Paper ID: f5dd44cb2d185bb4af6130c390d584db8c4994bf&quot;
 ## [1] &quot;Signatures of Nucleotide Analog Incorporation by an RNA-Dependent RNA Polymerase Revealed Using High-Throughput Magnetic Tweezers&quot;
+## [1] &quot;Paper ID: f5de8066a6e6df907e2389816f2372a427235a9f&quot;
 ## [1] &quot;Comparison of cytokine expression profiles in infants with a rhinovirus induced lower respira tory tract infection with or without wheez ing: a comparison with respiratory syn cytial virus&quot;
+## [1] &quot;Paper ID: f86a27f248abc89aef420f88323538086c8b9f8f&quot;
 ## [1] &quot;Citation: Molecular Therapy-Nucleic Acids (2012) 1, e56; Molecular Therapy-Nucleic Acids (2012) 1, e56&quot;
+## [1] &quot;Paper ID: f8da6bc56b3d7a64f5f0ba9a7928264dc986e43f&quot;
 ## [1] &quot;A Single Native Ganglioside GM 1 -Binding Site Is Sufficient for Cholera Toxin To Bind to Cells and Complete the Intoxication Pathway&quot;
+## [1] &quot;Paper ID: f91911b6a25c970324854df7b87c550ae7fb878f&quot;
 ## [1] &quot;&quot;
+## [1] &quot;Paper ID: f9476a333c17961ff4cc34b45f4b2da5ed29457f&quot;
 ## [1] &quot;Ad Hoc Influenza Vaccination During Years of Significant Antigenic Drift in a Tropical City With 2 Seasonal Peaks A Cross-Sectional Survey Among Health Care Practitioners&quot;
+## [1] &quot;Paper ID: f94c7a970b81de90b8594683b77db556e15ebd9f&quot;
 ## [1] &quot;PtK1 Cells Contain a Nonditfusible, Dominant Factor That Makes the Golgi Apparatus Resistant to Brefeldin A&quot;
+## [1] &quot;Paper ID: fab32444594a7c25009ffcd48e91c923f5f0316f&quot;
 ## [1] &quot;The imperative to develop a human vaccine for the Hendra virus in Australia&quot;
+## [1] &quot;Paper ID: fc363739ad7ec8d796aba6af478d986a4c0f5f3f&quot;
 ## [1] &quot;Neonatal infections in Saudi Arabia: Association with cytokine gene polymorphisms&quot;
+## [1] &quot;Paper ID: fc3bce122003ef28564d0dfaec7bd5771cfa4bff&quot;
 ## [1] &quot;FIRST DETECTION OF CANINE PARVOVIRUS TYPE 2C IN BRAZIL&quot;</code></pre>
+</div>
+</div>
 </div>
 <div id="for-reproducibility" class="section level2">
 <h2>For reproducibility</h2>

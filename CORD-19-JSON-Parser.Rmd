@@ -17,9 +17,28 @@ library("rjson")
 
 # set this to TRUE for lots of helpful debugging output, or to FALSE to suppress it
 DEBUG <- TRUE
+
 ```
 
-## How to navigate a single CORD-19 JSON file
+### Utility functions
+
+#### Output to a text file
+
+```{r output.to.text.file}
+# NB: if the directory already exists, it has to be manually emptied and deleted
+output.directory <- "/Users/transfer/Dropbox/Scripts-new/cord19output/"
+dir.create(output.directory)
+output.to.text.file <- function(textual.contents, file.name) {
+# code adapted from https://stackoverflow.com/questions/2470248/write-lines-of-text-to-a-file-in-r
+  
+  file.name <- paste(file.name, ".txt", sep = "")
+  fileConn <-file(file.name)
+  writeLines(textual.contents, fileConn)
+  close(fileConn)
+}
+```
+
+#### How to navigate a single CORD-19 JSON file
 
 ```{r get.json.text}
 
@@ -29,10 +48,13 @@ DEBUG <- TRUE
 #parse.single.file <- function(json.contents, get.section) {
 get.json.text <- function(json.contents, section.to.get) {
   
+  textual.contents <- ""
+  
   # TODO: validate that section.to.get is one that we support
   if (section.to.get == "TITLE" || section.to.get == "ALL") {
     if (DEBUG) {
       print(json.contents$metadata$title)
+      textual.contents <- paste(textual.contents, json.contents$metadata$title)
     }
   }
 
@@ -48,6 +70,7 @@ get.json.text <- function(json.contents, section.to.get) {
         print("*********%%%%%%%%%%% ABSTRACT ABSTRACT ABSTRACT %%%%%%%%%%%%%*********")
         print(json.contents$abstract[[j]]$text)
       }
+      textual.contents <- paste(textual.contents, json.contents$abstract[[j]]$text)
     } # close for-loop through abstract contents
   } # close if-length-greater-than-0
   }
@@ -60,9 +83,11 @@ get.json.text <- function(json.contents, section.to.get) {
         #print(json.contents$body_text[i])
         print(json.contents$body_text[[i]]$text)
       }
+      textual.contents <- paste(json.contents$body_text[[i]]$text)
     } # close for-loop through body
 
   } # close if-body
+  return(textual.contents)
 } # close function definition
 
 # no abstract
@@ -113,10 +138,10 @@ get.json.text <- function(json.contents, section.to.get) {
 #}
 ```
 
+#### Process contents of a directory
+
 ```{r parse.directory.contents}
 
-#directory.contents <- list.files(path = "/Users/transfer/Dropbox/a-m/Corpora/cord19/noncomm_use_subset/ff*.json", full.names = TRUE, recursive = TRUE)
-#directory.contents <- list.files("/Users/transfer/Dropbox/a-m/Corpora/cord19/noncomm_use_subset/*.json")
 # NB NB NB: if there are more files in the directory than can be listed, you will get NAs for the file names. Consequently, I am limiting them by specifying their beginning, as well as their extension.  For example: ff*.json, rather than *.json
 directory.contents <- list.files("/Users/transfer/Dropbox/a-m/Corpora/cord19/noncomm_use_subset/", pattern = "ff*.json", full.names = TRUE)
 
@@ -124,8 +149,14 @@ print(paste("Count of this subset of files:", as.character(length(directory.cont
 print(directory.contents[1:10])
 
 for (i in 1:length(directory.contents)) {
-  json.contents <- fromJSON(file = directory.contents[i]) 
-  get.json.text(json.contents, "TITLE")
+  json.contents <- fromJSON(file = directory.contents[i])
+  if (DEBUG) {
+    print(paste("Paper ID:", json.contents$paper_id))
+  }
+  paper.id <- json.contents$paper_id
+  textual.contents <- get.json.text(json.contents, "TITLE")
+  file.name <- paste(output.directory, paper.id, sep = "")
+  output.to.text.file(textual.contents, file.name = file.name)
 }
 ```
 
