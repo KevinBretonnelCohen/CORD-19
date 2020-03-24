@@ -187,7 +187,7 @@ summary {
 <h2>TODO list</h2>
 <ul>
 <li>Assemble set of test cases</li>
-<li>Clean up commented-out code</li>
+<li>Clean up commented-out code DONE</li>
 <li>Put directory path in variable for ease of use by others</li>
 </ul>
 <div id="utility-functions" class="section level3">
@@ -196,8 +196,10 @@ summary {
 <h4>Output to a text file</h4>
 <pre class="r"><code># NB: if the directory already exists, it has to be manually emptied and deleted
 output.directory &lt;- &quot;/Users/transfer/Dropbox/Scripts-new/cord19output/&quot;
-dir.create(output.directory)
-output.to.text.file &lt;- function(textual.contents, file.name) {
+dir.create(output.directory)</code></pre>
+<pre><code>## Warning in dir.create(output.directory): '/Users/transfer/Dropbox/Scripts-new/
+## cord19output' already exists</code></pre>
+<pre class="r"><code>output.to.text.file &lt;- function(textual.contents, file.name) {
 # code adapted from https://stackoverflow.com/questions/2470248/write-lines-of-text-to-a-file-in-r
   
   file.name &lt;- paste(file.name, &quot;.txt&quot;, sep = &quot;&quot;)
