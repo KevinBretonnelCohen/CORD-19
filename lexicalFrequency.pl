@@ -43,9 +43,9 @@ for (my $i = 0; $i < @directory_contents; $i++) {
     0 && print "File name: $directory_contents[$i]\n";
 
     # normal file type: .txt
-    #if ($directory_contents[$i] =~ /txt$/) {
+    if ($directory_contents[$i] =~ /txt$/) {
     # for analyzing brat annotation files
-    if ($directory_contents[$i] =~ /ann$/) {
+    #if ($directory_contents[$i] =~ /ann$/) {
 	my $filename = $input_directory . "/" . $directory_contents[$i];
 
 	#open (IN, $directory_contents[$i]) || die "Couldn't open input file $directory_contents[$i]: $!\n";
