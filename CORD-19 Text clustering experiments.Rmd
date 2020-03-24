@@ -6,6 +6,7 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library("tm")
+set.seed(1789)
 ```
 
 ## Introduction
@@ -34,10 +35,12 @@ DEBUG = TRUE
 ```{r create.corpus}
 #Create Corpus
 docs <- Corpus(DirSource(input.directory))
+docs.CRAFT <- Corpus(DirSource("/Users/transfer/Dropbox/a-m/Corpora/craft-2.0/articles/txt/"))
 
 if (DEBUG) {
   #inspect a particular document
-  writeLines(as.character(docs[[30]]))
+  writeLines(as.character(docs[[1]]))
+  writeLines(as.character(docs.CRAFT[[1]]))
 }  
 ```
 
@@ -48,6 +51,9 @@ dtm <- DocumentTermMatrix(docs)
 if (DEBUG) {
   dtm
 }
+
+dtm.CRAFT <- DocumentTermMatrix(docs.CRAFT)
+
 ```
 
 
@@ -68,6 +74,18 @@ write.csv(m,file="dtmEight2Late.csv")
 #compute distance between document vectors
 rownames(m) <- substring(rownames(m), 1, 5) # assuming that row names are at least 5 characters long! Holds true of the file names in the CORD0-19 corpus.
 d <- dist(m)
+
+m.CRAFT <- as.matrix(dtm.CRAFT)
+#write as csv file (optional)
+write.csv(m.CRAFT,file="dtmEight2Late.csv")
+#shorten rownames for display purposes
+# NEXT THREE LINES GIVE ME AN ERROR--CHECK COMMENTS ON WEB PAGE
+#rownames(m) <- paste(substring(rownames(m),1,3),rep("..",nrow(m)),
+#+                      substring(rownames(m), #nchar(rownames(m))-12,nchar(rownames(m))-4))
+
+#compute distance between document vectors
+rownames(m.CRAFT) <- substring(rownames(m.CRAFT), 1, 5) # assuming that row names are at least 5 characters long! Holds true of the file names in the CORD0-19 corpus.
+d <- dist(m.CRAFT)
 ```
 
 #### Hierarchical clustering
@@ -128,7 +146,9 @@ par(default.parameters) # gives me a bunch of warnings
 
 First hypothesis: no effect of varying _nstart_ across a range of values of _k_.
 
-```{r vary.nstart}
+Wait, this is stupid--I'm looking at the differences of the sizes of the first two clusters, but that's not even meaningful with k of more than 2.
+
+```{r vary.nstart.discard, eval = FALSE}
 library(cluster) # move this to set-up after development
 #default.parameters <- par()
 #par(mfrow=c(2,2))
@@ -138,14 +158,68 @@ cluster.size.differences <- c()
 for (k.itself in 2:5) {
   for (i in 1:length(nstart.values)) {}
   kfit <- kmeans(d, k.itself, nstart=nstart.values[i])
+  print(paste("Cluster sizes:", kfit$size))
   cluster.size.difference <- kfit$size[1] - kfit$size[2]
   cluster.size.differences <- c(cluster.size.differences, cluster.size.difference)
   #plot – need library cluster
   #clusplot(as.matrix(d), kfit$cluster, color=T, shade=T, labels=2, lines=0)
 }
 
-boxplot(cluster.size.differences)
+boxplot(cluster.size.differences, main = "Ignore this graph")
 #par(default.parameters) # gives me a bunch of warnings
+```
+
+OK, so, there are other things about the clustering fits that might actually be meaningful, so let's look at some of those.
+
+```{r vary.nstart.and.k}
+library(cluster) # move this to set-up after development
+#default.parameters <- par()
+#par(mfrow=c(2,2))
+
+nstart.values <- c(25, 50, 75, 100)
+all.withinss <- c()
+all.betweenss <- c()
+
+by.k <- data.frame(k = as.character(), withinss = as.integer(), betweenss = as.integer())
+
+#cluster.size.differences <- c()
+for (k.itself in 2:5) {
+  for (i in 1:length(nstart.values)) {}
+  kfit <- kmeans(d, k.itself, nstart=nstart.values[i])
+  #print(paste("Cluster sizes:", kfit$size))
+  #cluster.size.difference <- kfit$size[1] - kfit$size[2]
+  #cluster.size.differences <- c(cluster.size.differences, cluster.size.difference)
+  #plot – need library cluster
+  #clusplot(as.matrix(d), kfit$cluster, color=T, shade=T, labels=2, lines=0)
+  all.withinss <- c(all.withinss, kfit$withinss)
+  all.betweenss <- c(all.betweenss, kfit$betweenss)
+  
+  by.k <- rbind(by.k, c(k.itself, kfit$withinss, kfit$betweenss))
+}
+
+#boxplot(cluster.size.differences, main = "Ignore this graph")
+#par(default.parameters) # gives me a bunch of warnings
+
+boxplot(by.k[1,2], by.k[2,2], by.k[3,2], by.k[4,2], names = c("k = 1", "k = 2", "k = 3", "k = 3"),
+        main = "Variability in Within Sum of Squares as k is varied")
+# scale is so large that you can't see whether there's any variability, or not. Normalize within_ss?  
+
+by.k
+
+boxplot(by.k[,2], by.k[,3], 
+        main = "Variability in sum of squares across k = 2 to k = 5", 
+        names = c("Within SS", "Between SS"))
+
+plot(by.k[,1], by.k[,2], xlim = c(0,6),
+     main = "Variation in Within SS as k increases")
+
+plot(by.k[,1], by.k[,3], xlim = c(0,6),
+     main = "Variation in Between SS as k increases")
+
+
+
+
+
 ```
 
 
