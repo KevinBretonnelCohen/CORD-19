@@ -4,6 +4,12 @@ output: html_document
 author: "University School of Medicine, Computational Bioscience Program, Biomedical Text Mining Group - Kevin Bretonnel Cohen"
 ---
 
+## TODO list
+
+- Assemble set of test cases
+- Clean up commented-out code
+- Put directory path in variable for ease of use by others
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 #install.packages("rjson")
@@ -66,16 +72,17 @@ get.json.text <- function(json.contents, section.to.get) {
 #json.contents <- fromJSON(file = "/Users/transfer/Dropbox/a-m/Corpora/cord19/noncomm_use_subset/ff5a79ed22ea416e6d89caad1cf0d83dbc741a4b.json") # 
 
 
-
-json.contents <- fromJSON(file = "/Users/transfer/Dropbox/a-m/Corpora/cord19/noncomm_use_subset/025ed2caa0ae1ab7f04d3479116e6ed2a334938d.json") # 
-
-get.json.text(json.contents, section.to.get = "TITLE")
-
-get.json.text(json.contents, section.to.get = "ABSTRACT")
-
-get.json.text(json.contents, section.to.get = "BODY")
-
-get.json.text(json.contents, section.to.get = "ALL")
+# # NOT tests, just for validation during development
+# # This is a file that I know has an abstract, so I used it for development
+# json.contents <- fromJSON(file = "/Users/transfer/Dropbox/a-m/Corpora/cord19/noncomm_use_subset/025ed2caa0ae1ab7f04d3479116e6ed2a334938d.json") # 
+# 
+# get.json.text(json.contents, section.to.get = "TITLE")
+# 
+# get.json.text(json.contents, section.to.get = "ABSTRACT")
+# 
+# get.json.text(json.contents, section.to.get = "BODY")
+# 
+# get.json.text(json.contents, section.to.get = "ALL")
   
 # works
 #print(json.contents) 
@@ -108,6 +115,18 @@ get.json.text(json.contents, section.to.get = "ALL")
 
 ```{r parse.directory.contents}
 
+#directory.contents <- list.files(path = "/Users/transfer/Dropbox/a-m/Corpora/cord19/noncomm_use_subset/ff*.json", full.names = TRUE, recursive = TRUE)
+#directory.contents <- list.files("/Users/transfer/Dropbox/a-m/Corpora/cord19/noncomm_use_subset/*.json")
+# NB NB NB: if there are more files in the directory than can be listed, you will get NAs for the file names. Consequently, I am limiting them by specifying their beginning, as well as their extension.  For example: ff*.json, rather than *.json
+directory.contents <- list.files("/Users/transfer/Dropbox/a-m/Corpora/cord19/noncomm_use_subset/", pattern = "ff*.json", full.names = TRUE)
+
+print(paste("Count of this subset of files:", as.character(length(directory.contents))))
+print(directory.contents[1:10])
+
+for (i in 1:length(directory.contents)) {
+  json.contents <- fromJSON(file = directory.contents[i]) 
+  get.json.text(json.contents, "TITLE")
+}
 ```
 
 ## For reproducibility
