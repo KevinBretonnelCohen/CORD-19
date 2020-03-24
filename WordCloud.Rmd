@@ -1,0 +1,116 @@
+---
+title: "WordCloud"
+output: html_document
+author: "University of Colorado School of Medicine, Computational Bioscience Program, Biomedical Text Mining Group -- Kevin Bretonnel Cohen (add yourself!)"
+---
+
+## Introduction
+
+Code adapted from http://www.sthda.com/english/wiki/text-mining-and-word-cloud-fundamentals-in-r-5-simple-steps-you-should-know.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# install packages--only has to be run once. So, uncomment this the first time that you run the script, and then comment it out again.
+# install.packages("tm")  # for text mining
+# install.packages("SnowballC") # for text stemming
+# install.packages("wordcloud") # word-cloud generator 
+# install.packages("RColorBrewer") # color palettes
+
+# Load packages
+library("tm")
+library("SnowballC")
+library("wordcloud")
+library("RColorBrewer")
+
+```
+
+## Global variables
+
+```{r}
+
+# set to TRUE for lots of helpful debugging output, or to FALSE to suppress same
+DEBUG <- TRUE
+#DEBUG <- FALSE
+
+# all input text has to be in a single file
+input.directory <- "/Users/transfer/Dropbox/Scripts-new/wordCloudInput/"
+
+wordcloud.title <- "CORD-19 Abstracts"
+input.file <- "cord19.abstracts.txt"
+
+wordcloud.title <- "CORD-19 Article Bodies"
+input.file <- "cord19.bodies.txt"
+
+wordcloud.title <- "CORD-19 Papers"
+input.file <- "cord19.papers.txt"
+
+wordcloud.title <- "CORD-19 Titles"
+input.file <- "cord19titles.txt"
+
+input.file <- paste(input.directory, input.file, sep = "")
+print(paste("Input file:", as.character(input.file)))
+
+# for development only:
+#input.file <- "/Users/transfer/Dropbox/a-m/Corpora/craft-2.0/articles/txt/17696610.txt"
+# let's make that single file here, rather than rely on having done it manually at the command line...
+input.file.list <- list.files(input.directory, pattern = "")
+#print(input.file.list[1:5])
+# read contents of directory containing one file per paper
+
+```
+
+```{r generate.word.cloud}
+text <- readLines(input.file)
+# Load the data as a corpus
+docs <- Corpus(VectorSource(text))
+inspect(docs)
+
+# normalize
+# Convert the text to lower case
+docs <- tm_map(docs, content_transformer(tolower))
+# Remove english common stopwords
+docs <- tm_map(docs, removeWords, stopwords("english"))
+# specify your stopwords as a character vector
+docs <- tm_map(docs, removeWords, c("figure", "table"))
+# Eliminate extra white spaces
+docs <- tm_map(docs, stripWhitespace)
+
+# build term-document matrix
+dtm <- TermDocumentMatrix(docs)
+m <- as.matrix(dtm)
+v <- sort(rowSums(m),decreasing=TRUE)
+d <- data.frame(word = names(v),freq=v)
+head(d, 10)
+set.seed(1234)
+wordcloud(words = d$word, freq = d$freq, min.freq = 1,
+          max.words=200, random.order=FALSE, rot.per=0.35, 
+          colors=brewer.pal(8, "Dark2"))
+```
+
+```{r analysis}
+# find words and their associations
+findFreqTerms(dtm, lowfreq = 4)
+#findAssocs(dtm, terms = "freedom", corlimit = 0.3)
+#findAssocs(dtm, terms = "human", corlimit = 0.3)
+findAssocs(dtm, terms = c("human", "mouse", "treatment", "blinded"), corlimit = 0.3)
+
+# frequency table of words
+head(d, 10)
+
+# plot word frequencies.  Is the code that I took from the web page raw frequencies?? I think so...
+#barplot(d[1:10,]$freq, las = 2, names.arg = d[1:10,]$word,
+#        col ="lightblue", main ="Most frequent words",
+#        ylab = "Word frequencies")
+barplot(d[1:10,]$freq, las = 2, names.arg = d[1:10,]$word,
+        col ="lightblue", main = wordcloud.title,
+        ylab = "Word frequencies")
+
+```
+
+## For reproducibility
+
+```{r reproducibility}
+sessionInfo()
+```
+
