@@ -1,17 +1,64 @@
 ---
 title: "CORD-19 Corpus"
 output: html_document
+author: "University School of Medicine, Computational Bioscience Program, Biomedical Text Mining Group - Kevin Bretonnel Cohen"
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 #install.packages("rjson")
 library("rjson")
+
+# set this to TRUE for lots of helpful debugging output, or to FALSE to suppress it
+DEBUG <- TRUE
 ```
 
 ## How to navigate a single CORD-19 JSON file
 
-```{r parse.single.file}
+```{r get.json.text}
+
+# the argument json.contents is an rjson object containing the contents of a single file.
+# the argument section.to.get tells whether to get an individual section, or all.
+# values for section.to.get: TITLE, ABSTRACT, BODY, ALL
+#parse.single.file <- function(json.contents, get.section) {
+get.json.text <- function(json.contents, section.to.get) {
+  
+  # TODO: validate that section.to.get is one that we support
+  if (section.to.get == "TITLE" || section.to.get == "ALL") {
+    if (DEBUG) {
+      print(json.contents$metadata$title)
+    }
+  }
+
+
+  if (section.to.get == "ABSTRACT" || section.to.get == "ALL") {
+    
+    # the abstract is a list, so if there is an abstract, then the length of the list will be > 0
+    if (length(json.contents$abstract) > 0) { 
+    # each thing in the list is a separate chunk of the text of the abstract, which could be multiple paragraphs/sections
+    # NB: weird iterator name j because I moved this from another location--refactor for clarity
+    for (j in 1:length(json.contents$abstract)) {
+      if (DEBUG) {
+        print("*********%%%%%%%%%%% ABSTRACT ABSTRACT ABSTRACT %%%%%%%%%%%%%*********")
+        print(json.contents$abstract[[j]]$text)
+      }
+    } # close for-loop through abstract contents
+  } # close if-length-greater-than-0
+  }
+  
+  if (section.to.get == "BODY" || section.to.get == "ALL") {
+    # this for-loop goes through a single file and extracts the text of the body. need separate code for title, abstract (if there be one), etc.
+    for (i in 1:length(json.contents$body_text)) {
+      if (DEBUG) {
+        print(paste("Body iterator value:", i))
+        #print(json.contents$body_text[i])
+        print(json.contents$body_text[[i]]$text)
+      }
+    } # close for-loop through body
+
+  } # close if-body
+} # close function definition
+
 # no abstract
 #json.contents <- fromJSON(file = "/Users/transfer/Dropbox/a-m/Corpora/cord19/noncomm_use_subset/ff34c772e37156609477e7f0fa4aba793171f806.json") # no abstract
 
@@ -22,34 +69,41 @@ library("rjson")
 
 json.contents <- fromJSON(file = "/Users/transfer/Dropbox/a-m/Corpora/cord19/noncomm_use_subset/025ed2caa0ae1ab7f04d3479116e6ed2a334938d.json") # 
 
+get.json.text(json.contents, section.to.get = "TITLE")
 
+get.json.text(json.contents, section.to.get = "ABSTRACT")
+
+get.json.text(json.contents, section.to.get = "BODY")
+
+get.json.text(json.contents, section.to.get = "ALL")
+  
 # works
 #print(json.contents) 
-print(json.contents$paper_id) # works
-print(json.contents$metadata$title) # works
+#print(json.contents$paper_id) # works
+#print(json.contents$metadata$title) # works
 #print(json.contents$metadata$authors) # works
 #print(json.contents$body_text) # works, but not what I need
-print(json.contents[[1]]) # the paper ID
-print(json.contents$paper_id) # 
+#print(json.contents[[1]]) # the paper ID
+#print(json.contents$paper_id) # 
 #print(json.contents$body_text) # works, but not what I need
-print(length(json.contents$body_text))
+#print(length(json.contents$body_text))
 
-print(json.contents$paper_id) # works
-print(json.contents$metadata$title) # works
-if (length(json.contents$abstract) > 0) { 
-  # each thing in the list is a separate chunk of the text of the abstract, which could be multiple paragraphs/sections
-  for (j in 1:length(json.contents$abstract)) {
-    print("*********%%%%%%%%%%% ABSTRACT ABSTRACT ABSTRACT %%%%%%%%%%%%%*********")
-    print(json.contents$abstract[[j]]$text)
-  }
-}
+#print(json.contents$paper_id) # works
+#print(json.contents$metadata$title) # works
+# if (length(json.contents$abstract) > 0) { 
+#   # each thing in the list is a separate chunk of the text of the abstract, which could be multiple paragraphs/sections
+#   for (j in 1:length(json.contents$abstract)) {
+#     print("*********%%%%%%%%%%% ABSTRACT ABSTRACT ABSTRACT %%%%%%%%%%%%%*********")
+#     print(json.contents$abstract[[j]]$text)
+#   }
+# }
 
-# this for-loop goes through a single file and extracts the text of the body. need separate code for title, abstract (if there be one), etc.
-for (i in 1:length(json.contents$body_text)) {
-  print(paste("Body iterator value:", i))
-  #print(json.contents$body_text[i])
-  print(json.contents$body_text[[i]]$text)
-}
+## this for-loop goes through a single file and extracts the text of the body. need separate code for title, abstract (if there be one), etc.
+#for (i in 1:length(json.contents$body_text)) {
+#  print(paste("Body iterator value:", i))
+#  #print(json.contents$body_text[i])
+#  print(json.contents$body_text[[i]]$text)
+#}
 ```
 
 ```{r parse.directory.contents}
