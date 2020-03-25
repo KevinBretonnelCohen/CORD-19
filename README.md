@@ -7,7 +7,7 @@ https://pages.semanticscholar.org/coronavirus-research
 
 CORD-19-JSON-Parser.Rmd/.html: Parses the CORD-19 JSON files and pulls out the important text.
 
-WordCloud.Rmd/.html: A COVID-19-specific word cloud, analysis of word associations, and analysis of lexical frequencies.
+Way too many versions of the WordCloud code--sorry: A COVID-19-specific word cloud, analysis of word associations, and analysis of lexical frequencies.
 
 CORD-19 Text clustering experiments.Rmd/.html: Simple text clustering experiments using K-means and hierarchical clustering. Various parameters are varied.
 
