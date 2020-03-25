@@ -53,12 +53,34 @@ wordcloud.title <- "CORD-19 Abstracts"
 input.file <- "cord19abstracts.txt"
 
 # for situations where I want to compare multiple corpora: maybe I can put all of the parameters in a data frame?
-corpus.parameters <- data.frame(corpus.name = as.character(),
-                                input.file = as.character(),
-                                title.string = as.character())
+# corpus.parameters <- data.frame(corpus.name = as.character(),
+#                                 input.file = as.character(),
+#                                 title.string = as.character())
 
-cord19.parameters <- c("CORD-19", "cord19.papers.txt", "CORD-19 corpus")
-craft.parameters <- c("CRAFT", "craft.txt", "CRAFT corpus")
+#corpus.parameters <- data.frame(corpus.name = character(), input.file = character(), title.string = character())
+corpus.parameters <- data.frame(corpus.name = character(), input.file = character(), title.string = character(), stringsAsFactors = FALSE)
+head(corpus.parameters)
+# I don't know why I still have to do colnames()...
+colnames(corpus.parameters) <- c("corpus.name", "input.file", "title.string")
+#cord19.parameters <- c("CORD-19", "cord19.papers.txt", "CORD-19 Corpus")
+#craft.parameters <- c("CRAFT", "craft2.0.txt", "CRAFT Corpus")
+
+corpus.names <- c("CORD-19", "CRAFT")
+corpus.files <- c("cord19.papers.txt", "craft2.0.txt")
+corpus.title.strings <- c("CORD-19 Corpus", "CRAFT Corpus")
+
+#corpus.parameters$corpus.name <- corpus.names
+#corpus.parameters$input.file <- corpus.files
+#corpus.parameters$title.string <- corpus.title.strings
+#corpus.parameters <- rbind(corpus.parameters, cord19.parameters)
+#corpus.parameters <- rbind(corpus.parameters, craft.parameters)
+
+head(corpus.parameters)
+
+corpus.parameters <- cbind(corpus.names, corpus.files, corpus.title.strings)
+# make every column as.character()?
+head(corpus.parameters)
+# I don't know why cbind() works, but rbind() doesn't--but, there you have it... Maybe if I had done rbind() with both rows at the same time, like I did cbind() with all three columns here??
 
 # for development only:
 #input.file <- "/Users/transfer/Dropbox/a-m/Corpora/craft-2.0/articles/txt/17696610.txt"
@@ -87,7 +109,8 @@ build.Corpus.object <- function(input.directory, input.file) {
 
 ```{r normalize.text}
 
-# docs: the Corpus object
+# input: docs: the Corpus object
+# output: docs: the same Corpus object, but after normalization
 normalize.text <- function(docs) {
 # normalize
 # Convert the text to lower case
@@ -133,16 +156,17 @@ docs <- tm_map(docs, stripWhitespace)
 ```{r build.tdm}
 # build term-document matrix
 
-# docs: the Corpus object. 
+# input: docs: the Corpus object.
+# output: dtm, a TermDocumentMatrix
 # Assumption: you have already normalized the text with the normalize.text() function.
 
 build.tdm <- function(docs) {
   dtm <- TermDocumentMatrix(docs)
-  m <- as.matrix(dtm)
-  v <- sort(rowSums(m),decreasing=TRUE)
-  d <- data.frame(word = names(v),freq=v)
-  head(d, 10)
-  return(dtm, d)
+  # m <- as.matrix(dtm)
+  # v <- sort(rowSums(m),decreasing=TRUE)
+  # d <- data.frame(word = names(v),freq=v)
+  # head(d, 10)
+  return(dtm)
 } # close function definition build.tdm()
 
 ```
@@ -151,8 +175,14 @@ build.tdm <- function(docs) {
 
 # d: comes from the build.tdm() function
 # minimum.frequency: an integer that says "don't display anything that occurs fewer times than this."  See the comments in the function for ideas about reasonable values for different kinds of text.
-word.cloud.generation <- function(d, minimum.frequency) {
+#word.cloud.generation <- function(d, minimum.frequency) {
+word.cloud.generation <- function(dtm, minimum.frequency) {
   set.seed(1789)
+  m <- as.matrix(dtm)
+  v <- sort(rowSums(m),decreasing=TRUE)
+  d <- data.frame(word = names(v),freq=v)
+  head(d, 10)
+
 
   #minimum.frequency <- 10 # don't display anything that occurs fewer times than this in the word cloud. 10 is too big for titles
 #minimum.frequency <- 5 # 5 is too big for titles
@@ -162,6 +192,8 @@ word.cloud.generation <- function(d, minimum.frequency) {
   wordcloud(words = d$word, freq = d$freq, min.freq = minimum.frequency,
           max.words=200, random.order=FALSE, rot.per=0.35, 
           colors=brewer.pal(8, "Dark2"))
+  
+  # I don't think m, v, or d get used anywhere else, so no reason to return anything...
 } # close function definition word.cloud.generation()
 ```
 
@@ -172,15 +204,33 @@ word.cloud.generation <- function(d, minimum.frequency) {
 # d: I think it's just a data frame with words and frequencies--comes from the build.tdm() function
 # lowfreq: lowest frequency to include
 # plot.title: string that will be used as the title of the barplot that this generates
-frequencies <- function(dtm, d, lowfreq, plot.title) {
+word.frequencies <- function(dtm, lowfreq, plot.title) {
+
+  # I'm doing this twice--is it slow enough that that matters? TODO: check it out
+  set.seed(1789)
+  m <- as.matrix(dtm)
+  v <- sort(rowSums(m),decreasing=TRUE)
+  d <- data.frame(word = names(v),freq=v)
+  head(d, 10)
   
   findFreqTerms(dtm, lowfreq = 4)
   #findAssocs(dtm, terms = "freedom", corlimit = 0.3)
   #findAssocs(dtm, terms = "human", corlimit = 0.3)
-  findAssocs(dtm, terms = c("human", "mouse", "treatment", "blinded"), corlimit = 0.3)
+  # the words for which I want associated words
+  words.associated <- c("human", "mouse", "treatment", "blinded")
+  associations <- findAssocs(dtm, terms = words.associated, corlimit = 0.3)
+  print("Associations (top ones only):")
+  #print(head(associations)) # waaaay too much output, even with head()
 
+  for(i in 1:length(words.associated)) {
+    current.word <- words.associated[i]
+    print(paste("Current word:", current.word))
+    print(associations[[words.associated[i]]][1:10])  
+  }
+  
   # frequency table of words
-  head(d, 10)
+  print("Frequency table (top words only):") 
+  print(head(d, 10)) # ...or this?  TODO: check it out
 
   # plot word frequencies.  Is the code that I took from the web page raw frequencies?? I think so...
   #barplot(d[1:10,]$freq, las = 2, names.arg = d[1:10,]$word,
@@ -194,10 +244,38 @@ frequencies <- function(dtm, d, lowfreq, plot.title) {
 
 # Let's do it!
 
-```{r}
-normalize.text(build.Corpus.object(input.directory, input.file))
+```{r run.analyses}
 
-## NEXT TODO: REMOVE BUILDING d FROM tdm AND PUT IT IN THE FUNCTION WHERE IT'S USED XXXX
+# for (i in 1:nrow(corpus.parameters)) {
+#   corpus.name <- corpus.parameters$corpus.names
+#   input.file <- corpus.parameters$input.files
+#   wordcloud.title <- corpus.parameters$corpus.title.strings
+#   normalize.text(build.Corpus.object(input.directory, input.file))
+# }
+
+# TODO: could I return a DTM from here, so that if I run it on multiple corpora, I can do the relative frequency comparisons to look for over-represented words?
+run.analyses <- function(input.directory, input.file, wordcloud.title) {
+  
+
+  word.frequencies(build.tdm(normalize.text(build.Corpus.object(input.directory, input.file))), 5, wordcloud.title)
+
+  # ouch--we're building the DTM twice.  Maybe I shouldn't use that compositional form after all, cute as it is!  Still, it was good for gluing everything together in order to verify the sequence of function-calls...
+  word.cloud.generation(build.tdm(build.Corpus.object(input.directory, input.file)), 5)
+
+  # NEXT TODO: REMOVE BUILDING d FROM tdm AND PUT IT IN THE FUNCTION WHERE IT'S USED XXXX
+
+} # close function definition run.analyses()
+
+run.analyses(input.directory = input.directory, 
+             input.file = input.file,
+             wordcloud.title = wordcloud.title)
+
+input.directory <- "/Users/transfer/Dropbox/Scripts-new/wordCloudInput/"
+input.file <- "craft2.0.txt"
+wordcloud.title <- "Reference Corpus (CRAFT)"
+run.analyses(input.directory = input.directory, 
+             input.file = input.file,
+             wordcloud.title = wordcloud.title)
 ```
 
 ## For reproducibility
