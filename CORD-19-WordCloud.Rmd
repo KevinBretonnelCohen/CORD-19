@@ -1,0 +1,208 @@
+---
+title: "CORD-19 Lexical Analysis and WordCloud"
+author: University of Colorado School of Medicine, Computational Bioscience Program,
+  Biomedical Text Mining Group -- Kevin Bretonnel Cohen (add yourself!)
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+---
+
+## Introduction
+
+Code adapted from http://www.sthda.com/english/wiki/text-mining-and-word-cloud-fundamentals-in-r-5-simple-steps-you-should-know.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# install packages--only has to be run once. So, uncomment this the first time that you run the script, and then comment it out again.
+# install.packages("tm")  # for text mining
+# install.packages("SnowballC") # for text stemming
+# install.packages("wordcloud") # word-cloud generator 
+# install.packages("RColorBrewer") # color palettes
+
+# Load packages
+library("tm")
+library("SnowballC")
+library("wordcloud")
+library("RColorBrewer")
+
+```
+
+## Variables for you to set for your system
+
+```{r set.parameters}
+
+# set to TRUE for lots of helpful debugging output, or to FALSE to suppress same
+#DEBUG <- TRUE
+DEBUG <- FALSE
+
+# all input text has to be in a single file in the current version
+input.directory <- "/Users/transfer/Dropbox/Scripts-new/wordCloudInput/"
+
+#wordcloud.title <- "CORD-19 Article Bodies"
+#input.file <- "cord19.bodies.txt"
+
+#wordcloud.title <- "CORD-19 Papers"
+#input.file <- "cord19.papers.txt"
+
+#wordcloud.title <- "CORD-19 Titles"
+#input.file <- "cord19titles.txt"
+
+wordcloud.title <- "CORD-19 Abstracts"
+input.file <- "cord19abstracts.txt"
+
+# for situations where I want to compare multiple corpora: maybe I can put all of the parameters in a data frame?
+corpus.parameters <- data.frame(corpus.name = as.character(),
+                                input.file = as.character(),
+                                title.string = as.character())
+
+cord19.parameters <- c("CORD-19", "cord19.papers.txt", "CORD-19 corpus")
+craft.parameters <- c("CRAFT", "craft.txt", "CRAFT corpus")
+
+# for development only:
+#input.file <- "/Users/transfer/Dropbox/a-m/Corpora/craft-2.0/articles/txt/17696610.txt"
+# let's make that single file here, rather than rely on having done it manually at the command line...
+#input.file.list <- list.files(input.directory, pattern = "")
+#print(input.file.list[1:5])
+# read contents of directory containing one file per paper
+
+```
+
+```{r build.Corpus.object}
+build.Corpus.object <- function(input.directory, input.file) {
+  input.file <- paste(input.directory, input.file, sep = "")
+  print(paste("Input file:", as.character(input.file)))
+  text <- readLines(input.file)
+  # Load the data as a corpus
+  docs <- Corpus(VectorSource(text))
+  if (DEBUG) {
+    inspect(docs)
+  }
+  
+  return(docs)
+  
+} # close function definition build.Corpus.object()
+```
+
+```{r normalize.text}
+
+# docs: the Corpus object
+normalize.text <- function(docs) {
+# normalize
+# Convert the text to lower case
+docs <- tm_map(docs, content_transformer(tolower))
+# Remove english common stopwords
+docs <- tm_map(docs, removeWords, stopwords("english"))
+# specify your stopwords as a character vector
+# stray stopwords that aren't being taken care of by the "general English" stopword list
+docs <- tm_map(docs, removeWords, c("also", "among", "will", "several"))
+# section headings
+docs <- tm_map(docs, removeWords, c("figure", "table", "results", "results:", "abstract", "methods", "materials", "introduction", "discusion", "conclusions", "conclusion", "conflict", "interest", "acknowledgments", "acknowledgements"))
+# discourse connectors
+docs <- tm_map(docs, removeWords, c("however", "due"))
+# hedging/speculation cues
+docs <- tm_map(docs, removeWords, c("may", "might", "could", "perhaps", "potential"))
+# puffery
+docs <- tm_map(docs, removeWords, c("important", "significant", "highly", "well"))
+
+# Eliminate extra white spaces
+docs <- tm_map(docs, stripWhitespace)
+
+# # replace/detokenize specific strings
+# # NOT SURE THAT THIS ISN'T DELETING THINGS!
+# # NB: the warning "transformation drops documents" is only a warning--no documents are actually dropped, per this: https://stackoverflow.com/questions/51942767/r-tm-error-of-transformation-drops-documents
+# docs <- tm_map(docs, content_transformer(gsub), pattern = "novel coronavirus", replacement = "novel_coronavirus")
+# docs <- tm_map(docs, content_transformer(gsub), pattern = "autimmune responses", replacement = "AUTOIMM_RESP")
+# docs <- tm_map(docs, content_transformer(gsub), pattern = "autoimmune response", replacement = "AUTOIMM_RESP")
+# 
+# docs <- tm_map(docs, content_transformer(gsub), pattern = "immune responses", replacement = "IMM_RESP")
+# docs <- tm_map(docs, content_transformer(gsub), pattern = "immune response", replacement = "IMM_RESP")
+# 
+# # uppercase some things that should be uppercased
+# docs <- tm_map(docs, content_transformer(gsub), pattern = "\bmers\b", replacement = "MERS")
+# docs <- tm_map(docs, content_transformer(gsub), pattern = "\bsars\b", replacement = "SARS")
+
+# WHERE THE FUCK DID THOSE GO, EVEN AFTER I COMMENTED OUT ALL GSUB TRANSFORMATIONS???
+
+  return(docs)
+
+} # close function definition normalize.text()
+```
+
+```{r build.tdm}
+# build term-document matrix
+
+# docs: the Corpus object. 
+# Assumption: you have already normalized the text with the normalize.text() function.
+
+build.tdm <- function(docs) {
+  dtm <- TermDocumentMatrix(docs)
+  m <- as.matrix(dtm)
+  v <- sort(rowSums(m),decreasing=TRUE)
+  d <- data.frame(word = names(v),freq=v)
+  head(d, 10)
+  return(dtm, d)
+} # close function definition build.tdm()
+
+```
+
+```{r word.cloud}
+
+# d: comes from the build.tdm() function
+# minimum.frequency: an integer that says "don't display anything that occurs fewer times than this."  See the comments in the function for ideas about reasonable values for different kinds of text.
+word.cloud.generation <- function(d, minimum.frequency) {
+  set.seed(1789)
+
+  #minimum.frequency <- 10 # don't display anything that occurs fewer times than this in the word cloud. 10 is too big for titles
+#minimum.frequency <- 5 # 5 is too big for titles
+#minimum.frequency <- 3 # for titles
+
+
+  wordcloud(words = d$word, freq = d$freq, min.freq = minimum.frequency,
+          max.words=200, random.order=FALSE, rot.per=0.35, 
+          colors=brewer.pal(8, "Dark2"))
+} # close function definition word.cloud.generation()
+```
+
+```{r analysis.frequencies.and.associations}
+# find words and their associations
+# does it matter whether this is a DTM or a TDM??  Doesn't seem consistent where I got the code--TODO: double-check that!
+# dtm: a document-term matrix. Comes from build.tdm() function
+# d: I think it's just a data frame with words and frequencies--comes from the build.tdm() function
+# lowfreq: lowest frequency to include
+# plot.title: string that will be used as the title of the barplot that this generates
+frequencies <- function(dtm, d, lowfreq, plot.title) {
+  
+  findFreqTerms(dtm, lowfreq = 4)
+  #findAssocs(dtm, terms = "freedom", corlimit = 0.3)
+  #findAssocs(dtm, terms = "human", corlimit = 0.3)
+  findAssocs(dtm, terms = c("human", "mouse", "treatment", "blinded"), corlimit = 0.3)
+
+  # frequency table of words
+  head(d, 10)
+
+  # plot word frequencies.  Is the code that I took from the web page raw frequencies?? I think so...
+  #barplot(d[1:10,]$freq, las = 2, names.arg = d[1:10,]$word,
+  #        col ="lightblue", main ="Most frequent words",
+  #        ylab = "Word frequencies")
+  barplot(d[1:10,]$freq, las = 2, names.arg = d[1:10,]$word,
+        col ="lightblue", main = wordcloud.title,
+        ylab = "Word frequencies")
+} # close function definition
+```
+
+# Let's do it!
+
+```{r}
+normalize.text(build.Corpus.object(input.directory, input.file))
+
+## NEXT TODO: REMOVE BUILDING d FROM tdm AND PUT IT IN THE FUNCTION WHERE IT'S USED XXXX
+```
+
+## For reproducibility
+
+```{r reproducibility}
+sessionInfo()
+```
+
