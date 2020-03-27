@@ -21,12 +21,12 @@ my $smoothing_factor = 100; # Adam liked 100--don't remember why
 #open(IN2, "/Users/transfer/Dropbox/Scripts-new/craft.10.words.txt") || die "$!\n"; # small file for development only
 
 # test case: all ratios should be 1.0, because you're comparing a corpus against itself
-open(IN1, "/Users/transfer/Dropbox/Scripts-new/craft.lexical.frequencies.txt") || die "$!\n";
-open(IN2, "/Users/transfer/Dropbox/Scripts-new/craft.lexical.frequencies.txt") || die "$!\n";
+#open(IN1, "/Users/transfer/Dropbox/Scripts-new/craft.lexical.frequencies.txt") || die "$!\n";
+#open(IN2, "/Users/transfer/Dropbox/Scripts-new/craft.lexical.frequencies.txt") || die "$!\n";
 
 # test case: almost completely disjunct vocabularies. A and Z are in both corpora and have equal counts, so one or the other should have a ratio of 1.0, depending on whether 01 or 02 is the reference.  The other contents are disjoint, so we should have big numbers for {B, C, D} if file 02 is the reference, and small numbers for {V, W, X, Y} if file 01 is the reference.
-#open(IN1, "/Users/transfer/Dropbox/Scripts-new/test.overrepresented.01.txt") || die "$!\n";
-#open(IN2, "/Users/transfer/Dropbox/Scripts-new/test.overrepresented.02.txt") || die "$!\n";
+open(IN1, "/Users/transfer/Dropbox/Scripts-new/test.overrepresented.01.txt") || die "$!\n";
+open(IN2, "/Users/transfer/Dropbox/Scripts-new/test.overrepresented.02.txt") || die "$!\n";
 
 # READ IN THE DATA
 # ...from C1, the corpus of interest
@@ -169,8 +169,14 @@ foreach my $word (keys(%corpus01)) {
       
       # you did it again, asshole!	
       #my $ratio = $c1_smoothed_frequency / $c2_smoothed_frequency;
-      my $ratio = $corpus01_smoothed_frequencies{$word} / $corpus02_smoothed_frequencies{$word};	
-      1 && print "<$word> C1 smoothed: $corpus01_smoothed_frequencies{$word} C2 smoothed: $corpus02_smoothed_frequencies{$word} ratio: $ratio\n";
+
+      # OK, this is wrong, although now in a DIFFERENT way: I haven't gone from (smoothed) counts to making it relative to the sizes of the corpora!!!
+      #my $ratio = $corpus01_smoothed_frequencies{$word} / $corpus02_smoothed_frequencies{$word};	
+       #1 && print "<$word> C1 smoothed: $corpus01_smoothed_frequencies{$word} C2 smoothed: $corpus02_smoothed_frequencies{$word} ratio: $ratio\n";
+	my $c1_relative_frequency = $corpus01_smoothed_frequencies{$word} / ($corpus01_tokens + ($corpus01_vocabulary_size * $smoothing_factor));
+        my $c2_relative_frequency = $corpus02_smoothed_frequencies{$word} / ($corpus02_tokens + ($corpus02_vocabulary_size * $smoothing_factor));
+
+	my $ratio = $c1_relative_frequency / $c2_relative_frequency; # TODO--check: do I need to normalize these to "per 10K words" or something in order to make them directly comparable??
 	
       $ratios{$word} = $ratio;
 
