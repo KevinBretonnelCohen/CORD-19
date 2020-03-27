@@ -9,23 +9,23 @@ my $smoothing_factor = 100; # Adam liked 100--don't remember why
 
 #open(IN1, "/Users/transfer/Dropbox/Scripts-new/cord19.lexical.frequencies.txt") || die "$!\n";
 #open(IN2, "/Users/transfer/Dropbox/Scripts-new/craft.lexical.frequencies.txt") || die "$!\n";
-#open(IN2, "/Users/transfer/Dropbox/Scripts-new/craft.10.words.txt") || die "$!\n";
+#open(IN2, "/Users/transfer/Dropbox/Scripts-new/craft.10.words.txt") || die "$!\n"; # small file for development only
 
 # test case: all ratios should be 1.0, because you're comparing a corpus against itself
-open(IN1, "/Users/transfer/Dropbox/Scripts-new/craft.lexical.frequencies.txt") || die "$!\n";
-open(IN2, "/Users/transfer/Dropbox/Scripts-new/craft.lexical.frequencies.txt") || die "$!\n";
+#open(IN1, "/Users/transfer/Dropbox/Scripts-new/craft.lexical.frequencies.txt") || die "$!\n";
+#open(IN2, "/Users/transfer/Dropbox/Scripts-new/craft.lexical.frequencies.txt") || die "$!\n";
 
-# test case: completely disjunct vocabularies, so big numbers for A-E and small numbers for V-Z
-#open(IN1, "/Users/transfer/Dropbox/Scripts-new/test.overrepresented.01.txt") || die "$!\n";
-#open(IN2, "/Users/transfer/Dropbox/Scripts-new/test.overrepresented.02.txt") || die "$!\n";
+# test case: almost completely disjunct vocabularies. A and Z are in both corpora and have equal counts, so one or the other should have a ratio of 1.0, depending on whether 01 or 02 is the reference.  The other contents are disjoint, so we should have big numbers for {B, C, D} if file 02 is the reference, and small numbers for {V, W, X, Y} if file 01 is the reference.
+open(IN1, "/Users/transfer/Dropbox/Scripts-new/test.overrepresented.01.txt") || die "$!\n";
+open(IN2, "/Users/transfer/Dropbox/Scripts-new/test.overrepresented.02.txt") || die "$!\n";
 
 while (my $line = <IN1>) {
     0 && print $line;
     chomp $line;
     if (length($line) < 1) { next; }
     # why am I sometimes having tab-separated input, and sometimes comma-separated?  Aren't these all coming from the same script, i.e. lexicalFrequencies.pl? That outputs tab-separated text... TODO: verify that all of my input data is, indeed, coming from that script...
-    #my ($word, $frequency) = split("\t", $line);
-    my ($word, $frequency) = split(",", $line);
+    my ($word, $frequency) = split("\t", $line);
+    #my ($word, $frequency) = split(",", $line);
     0 && print "$word: $frequency\n";
     $corpus01{$word} = $frequency; # + smoothing_factor;
 }
@@ -35,7 +35,8 @@ while (my $line = <IN2>) {
     0 && print $line;
     chomp $line;
     if (length($line) < 1) { next; }
-    my ($word, $frequency) = split(",", $line);
+    #my ($word, $frequency) = split(",", $line);
+    my ($word, $frequency) = split("\t", $line);
     0 && print "$word: $frequency\n";
     $corpus02{$word} = $frequency; # + smoothing_factor;
 }
