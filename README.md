@@ -12,3 +12,10 @@ CORD-19 Word Cloud.Rmd/.html: A COVID-19-specific word cloud, analysis of word a
 CORD-19 Text clustering experiments.Rmd/.html: Simple text clustering experiments using K-means and hierarchical clustering. Various parameters are varied.
 
 lexicalFrequency.pl: Raw frequencies of words, without preprocessing.
+
+overrepresentedWords.pl: Run this on the output of lexicalFrequency.pl to get over-represented words in the corpus.
+
+test.overrepresented.01/.02.txt: Test data for overrepresentedWords.pl
+
+
+
