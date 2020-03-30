@@ -1,0 +1,71 @@
+---
+title: 'Over-represented words: test cases'
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+#data <- read.table("/Users/transfer/Downloads/Over-represented words test cases - Sheet1.csv", sep = "\t", header = TRUE)
+#head(data)
+
+
+# IDs of the elements in the arrays
+
+names <- c("Corpus ID", "Size in tokens", "Smoothing factor", "Z",	"E",	"D",	"C",	"B",	"A",	"Y",	"X",	"W",	"V")
+# first element: the corpus ID (1 or 2)
+# second element: the total size of the corpus, in tokens
+# all other elements: count in tokens of each word in the vocabulary
+# NB: these should be of equal length.
+corpus.of.interest <- as.integer(c(1,	1406,	100,	5,	500,	400,	300,	200,	1,	0,	0,	0,	0))
+corpus.reference <- as.integer(c(2,	906,	100,	5,	0,	0,	0,	0,	1,	400,	300,	200,	100))
+corpus.of.interest
+
+smoothing.factor <- 100
+smoothing.factor
+
+corpus.of.interest.smoothed <- corpus.of.interest + smoothing.factor
+corpus.of.interest.smoothed
+
+corpus.reference.smoothed <- corpus.reference + smoothing.factor
+
+# subtract 2 from the length of the array because the first element is the ID of the corpus and the second element is the raw size of the corpus; multiply that by the smoothing factor
+corpus.of.interest.adjusted.corpus.size <- 
+corpus.of.interest[2] + (length(corpus.of.interest) - 2) * smoothing.factor
+corpus.of.interest.adjusted.corpus.size
+
+corpus.reference.adjusted.corpus.size <- 
+corpus.reference[2] + (length(corpus.reference) - 2) * smoothing.factor
+
+# NB: the two relative.frequencies arrays are now 2 elements shorter than the original arrays
+corpus.of.interest.relative.frequencies <- corpus.of.interest.smoothed[4:length(corpus.of.interest)] / corpus.of.interest.adjusted.corpus.size
+corpus.of.interest.relative.frequencies
+
+corpus.reference.relative.frequencies <- corpus.reference.smoothed[4:length(corpus.reference)] / corpus.reference.adjusted.corpus.size
+
+# We no longer ignore the first two, because the relative.frequencies arrays only contain counts of the elements of the vocabulary--we have removed the corpus ID and the corpus size from them
+#ratios <- corpus.of.interest.relative.frequencies[3:length(corpus.of.interest)] / corpus.reference.relative.frequencies[3:length(corpus.reference)]
+ratios <- corpus.of.interest.relative.frequencies / corpus.reference.relative.frequencies
+
+ratios
+#print(paste("Ratios should be:"), ratios)
+
+names.vocabulary <- names[4:length(names)]
+#print(names, ratios)
+for (i in 1:length(names.vocabulary)) {
+  print(paste(names.vocabulary[i], ratios[i]))
+}
+```
+
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
