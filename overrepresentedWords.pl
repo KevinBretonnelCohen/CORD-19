@@ -8,6 +8,10 @@ use strict 'vars';
 # a    5643
 # virus   299
 
+# set to 1 for lots of helpful debugging output, or to 0 to suppress same
+my $DEBUG = 0;
+#my $DEBUG = 1;
+
 # these contain the data as read in from the lexical frequency files
 my %corpus01 = ();
 my %corpus02 = ();
@@ -20,13 +24,14 @@ my $smoothing_factor = 100; # Adam liked 100--don't remember why
 #open(IN2, "/Users/transfer/Dropbox/Scripts-new/craft.lexical.frequencies.txt") || die "$!\n";
 #open(IN2, "/Users/transfer/Dropbox/Scripts-new/craft.10.words.txt") || die "$!\n"; # small file for development only
 
-# test case: all ratios should be 1.0, because you're comparing a corpus against itself
-#open(IN1, "/Users/transfer/Dropbox/Scripts-new/craft.lexical.frequencies.txt") || die "$!\n";
-#open(IN2, "/Users/transfer/Dropbox/Scripts-new/craft.lexical.frequencies.txt") || die "$!\n";
+# test case, metamorphic: all ratios should be 1.0, because you're comparing a corpus against itself. Validate the output like this:
+# ./overrepresentedWords.pl | egrep -v '\s1$' 
+open(IN1, "/Users/transfer/Dropbox/Scripts-new/craft.lexical.frequencies.txt") || die "$!\n";
+open(IN2, "/Users/transfer/Dropbox/Scripts-new/craft.lexical.frequencies.txt") || die "$!\n";
 
-# test case: almost completely disjunct vocabularies. A and Z are in both corpora and have equal counts, so one or the other should have a ratio of 1.0, depending on whether 01 or 02 is the reference.  The other contents are disjoint, so we should have big numbers for {B, C, D} if file 02 is the reference, and small numbers for {V, W, X, Y} if file 01 is the reference.
-open(IN1, "/Users/transfer/Dropbox/Scripts-new/test.overrepresented.01.txt") || die "$!\n";
-open(IN2, "/Users/transfer/Dropbox/Scripts-new/test.overrepresented.02.txt") || die "$!\n";
+# test case, structured: almost completely disjunct vocabularies. A and Z are in both corpora and have equal counts, so one or the other should have a ratio of 1.0, depending on whether 01 or 02 is the reference.  The other contents are disjoint, so we should have big numbers for {B, C, D} if file 02 is the reference, and small numbers for {V, W, X, Y} if file 01 is the reference.
+#open(IN1, "/Users/transfer/Dropbox/Scripts-new/test.overrepresented.01.txt") || die "$!\n";
+#open(IN2, "/Users/transfer/Dropbox/Scripts-new/test.overrepresented.02.txt") || die "$!\n";
 
 # READ IN THE DATA
 # ...from C1, the corpus of interest
@@ -78,8 +83,8 @@ foreach my $word (keys(%corpus02)) {
 my $corpus01_vocabulary_size = keys(%corpus01);
 my $corpus02_vocabulary_size = keys(%corpus02);
 # (note that I don't currently actually use the vocabulary sizes (i.e. number of types), but it's good to have them as a validation check.)
-1 && print "Corpus 01 has $corpus01_vocabulary_size types.\n";
-1 && print "Corpus 02 has $corpus02_vocabulary_size types.\n";
+$DEBUG && print "Corpus 01 has $corpus01_vocabulary_size types.\n";
+$DEBUG && print "Corpus 02 has $corpus02_vocabulary_size types.\n";
 
 # get the union of the words in the two corpora
 # NO--we just calculate the frequencies for the words that are in the corpus of interest (corpus01)
@@ -118,21 +123,21 @@ my $c2_smoothed_frequency;
 
 #foreach my $word (@unioned_words) {
 foreach my $word (keys(%corpus01)) {
-    1 && print "Before smoothing: $word in C1 raw freq. $corpus01{$word}\n";
+    $DEBUG && print "Before smoothing: $word in C1 raw freq. $corpus01{$word}\n";
     
     # the corpus of interest
     if ($corpus01{$word}) {
-	1 && print "$word exists in C1 with unsmoothed frequency $corpus01{$word}\n";
+	$DEBUG && print "$word exists in C1 with unsmoothed frequency $corpus01{$word}\n";
        $c1_smoothed_frequency = $corpus01{$word} + $smoothing_factor;
-	1 && print "...and smoothes to $c1_smoothed_frequency\n";
+	$DEBUG && print "...and smoothes to $c1_smoothed_frequency\n";
     } else {
 	$c1_smoothed_frequency = $smoothing_factor;
-	1 && print "$word does not exist in C1. Smoothed to $c1_smoothed_frequency\n"; # is that even possible?? yes, because it's unioned.  But, wait--why do we care, if it's not in the corpus of interest?? So, no: this shouldn't happen, and I should throw an error if it does. TODO
+	$DEBUG && print "$word does not exist in C1. Smoothed to $c1_smoothed_frequency\n"; # is that even possible?? yes, because it's unioned.  But, wait--why do we care, if it's not in the corpus of interest?? So, no: this shouldn't happen, and I should throw an error if it does. TODO
     }
     
 
     $corpus01_smoothed_frequencies{$word} = $c1_smoothed_frequency;
-    1 && print "After smoothing: $word in C1: $c1_smoothed_frequency\n";
+    $DEBUG && print "After smoothing: $word in C1: $c1_smoothed_frequency\n";
 
     # the reference corpus
     if ($corpus02{$word}) {
@@ -143,7 +148,7 @@ foreach my $word (keys(%corpus01)) {
     }
 
     $corpus02_smoothed_frequencies{$word} = $c2_smoothed_frequency;
-    1 && print "$word in C2: $c2_smoothed_frequency\n";
+    $DEBUG && print "$word in C2: $c2_smoothed_frequency\n";
 } # close foreach-loop to determine raw frequencies
 
     # CALCULATE THE RELATIVE FREQUENCIES AND THEIR RATIOS
@@ -160,19 +165,19 @@ foreach my $word (keys(%corpus01)) {
       #my $c1_relative_freq = $c1_raw_freq / $corpus01_size;
       #my $c2_relative_freq = $c2_raw_freq / $corpus02_size;
 	
-      #1 && print "<$word> C1 relative: $c1_relative_freq C2 relative: $c2_relative_freq\n";
+      #$DEBUG && print "<$word> C1 relative: $c1_relative_freq C2 relative: $c2_relative_freq\n";
 	
       # haha, dumbass Kevin--these values never changed, and that's why every word had the same ratio!
       #my $ratio = $c1_relative_freq / $c2_relative_freq;
 
-      #1 && print "<$word> ratio: $ratio\n";
+      #$DEBUG && print "<$word> ratio: $ratio\n";
       
       # you did it again, asshole!	
       #my $ratio = $c1_smoothed_frequency / $c2_smoothed_frequency;
 
       # OK, this is wrong, although now in a DIFFERENT way: I haven't gone from (smoothed) counts to making it relative to the sizes of the corpora!!!
       #my $ratio = $corpus01_smoothed_frequencies{$word} / $corpus02_smoothed_frequencies{$word};	
-       #1 && print "<$word> C1 smoothed: $corpus01_smoothed_frequencies{$word} C2 smoothed: $corpus02_smoothed_frequencies{$word} ratio: $ratio\n";
+       #$DEBUG && print "<$word> C1 smoothed: $corpus01_smoothed_frequencies{$word} C2 smoothed: $corpus02_smoothed_frequencies{$word} ratio: $ratio\n";
 	my $c1_relative_frequency = $corpus01_smoothed_frequencies{$word} / ($corpus01_tokens + ($corpus01_vocabulary_size * $smoothing_factor));
         my $c2_relative_frequency = $corpus02_smoothed_frequencies{$word} / ($corpus02_tokens + ($corpus02_vocabulary_size * $smoothing_factor));
 
