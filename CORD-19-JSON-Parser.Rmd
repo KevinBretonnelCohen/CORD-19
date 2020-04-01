@@ -66,8 +66,12 @@ get.json.text <- function(json.contents, section.to.get) {
   
   # TODO: validate that section.to.get is one that we support
   if (section.to.get == "TITLE" || section.to.get == "ALL") {
+ 
     if (DEBUG) {
+      print("************%%%%%%%%%%%%%%% TITLE TITLE TITLE %%%%%%%%%%%%%%%%%***********")
       print(json.contents$metadata$title)
+ 
+      ## WHY IS THIS "IF DEBUG"?????? XXXX TODO - figure it out
       textual.contents <- paste(textual.contents, json.contents$metadata$title)
     }
   }
@@ -90,6 +94,9 @@ get.json.text <- function(json.contents, section.to.get) {
   }
   
   if (section.to.get == "BODY" || section.to.get == "ALL") {
+    if (DEBUG) {
+      print("***************%%%%%%%%%%%%%% BODY BODY BODY %%%%%%%%%%%%%%%%*************")
+    }
     # this for-loop goes through a single file and extracts the text of the body. need separate code for title, abstract (if there be one), etc.
     for (i in 1:length(json.contents$body_text)) {
       if (DEBUG) {
@@ -148,9 +155,9 @@ for (i in 1:length(directory.contents)) {
     print(paste("Paper ID:", json.contents$paper_id))
   }
   paper.id <- json.contents$paper_id
-  textual.contents <- get.json.text(json.contents, "TITLE")
+  #textual.contents <- get.json.text(json.contents, "TITLE")
   #textual.contents <- get.json.text(json.contents, "ABSTRACT")
-  #textual.contents <- get.json.text(json.contents, "ALL")
+  textual.contents <- get.json.text(json.contents, "ALL")
   
   file.name <- paste(output.directory, paper.id, sep = "")
   output.to.text.file(textual.contents, file.name = file.name)
@@ -202,9 +209,12 @@ file.patterns <- c("[a-e]*.json",
                    "8*.json",
                    "9*.json")
 
+file.patterns <- c("ff0*.json")
+# one directory + file pattern at a time (for development/testing)
 #parse.directory.contents(directory, file.pattern)
 parse.directory.contents(directory, file.patterns)
 
+# list of directories + file patterns (for a full corpus)
 print(paste("Total files processed:", total.files.processed))
 ```
 
