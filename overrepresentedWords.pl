@@ -20,14 +20,14 @@ my %corpus02 = ();
 my $smoothing_factor = 100; # Adam liked 100--don't remember why
 
 # sets of files for tests and for the real data
-#open(IN1, "/Users/transfer/Dropbox/Scripts-new/cord19.lexical.frequencies.txt") || die "$!\n";
-#open(IN2, "/Users/transfer/Dropbox/Scripts-new/craft.lexical.frequencies.txt") || die "$!\n";
+open(IN1, "/Users/transfer/Dropbox/Scripts-new/cord19.lexical.frequencies.txt") || die "$!\n";
+open(IN2, "/Users/transfer/Dropbox/Scripts-new/craft.lexical.frequencies.txt") || die "$!\n";
 #open(IN2, "/Users/transfer/Dropbox/Scripts-new/craft.10.words.txt") || die "$!\n"; # small file for development only
 
 # test case, metamorphic: all ratios should be 1.0, because you're comparing a corpus against itself. Validate the output like this:
 # ./overrepresentedWords.pl | egrep -v '\s1$' 
-open(IN1, "/Users/transfer/Dropbox/Scripts-new/craft.lexical.frequencies.txt") || die "$!\n";
-open(IN2, "/Users/transfer/Dropbox/Scripts-new/craft.lexical.frequencies.txt") || die "$!\n";
+#open(IN1, "/Users/transfer/Dropbox/Scripts-new/craft.lexical.frequencies.txt") || die "$!\n";
+#open(IN2, "/Users/transfer/Dropbox/Scripts-new/craft.lexical.frequencies.txt") || die "$!\n";
 
 # test case, structured: almost completely disjunct vocabularies. A and Z are in both corpora and have equal counts, so one or the other should have a ratio of 1.0, depending on whether 01 or 02 is the reference.  The other contents are disjoint, so we should have big numbers for {B, C, D} if file 02 is the reference, and small numbers for {V, W, X, Y} if file 01 is the reference.
 #open(IN1, "/Users/transfer/Dropbox/Scripts-new/test.overrepresented.01.txt") || die "$!\n";
