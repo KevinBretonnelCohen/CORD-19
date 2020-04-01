@@ -1,13 +1,17 @@
 ---
 title: "CORD-19 Corpus"
-output: html_document
-author: "University School of Medicine, Computational Bioscience Program, Biomedical Text Mining Group - Kevin Bretonnel Cohen"
+author: University School of Medicine, Computational Bioscience Program, Biomedical
+  Text Mining Group - Kevin Bretonnel Cohen
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
 ---
 
 ## TODO list
 
 - Assemble set of test cases
-- Clean up commented-out code
+- Clean up commented-out code DONE
 - Put directory path in variable for ease of use by others
 
 ```{r setup, include=FALSE}
@@ -20,13 +24,24 @@ DEBUG <- TRUE
 
 ```
 
-### Utility functions
+### Utility functions and variables to set
+
+#### Global variables
+
+```{r}
+total.files.processed <- 0 # tracks the number of files that got processed, so that you can verify that it's what you expected
+```
 
 #### Output to a text file
 
 ```{r output.to.text.file}
 # NB: if the directory already exists, it has to be manually emptied and deleted
 output.directory <- "/Users/transfer/Dropbox/Scripts-new/cord19output/"
+output.directory <- "/Users/transfer/Dropbox/Scripts-new/cord19output-titles/"
+output.directory <- "/Users/transfer/Dropbox/Scripts-new/cord19output-abstracts/" # note that this doesn't currently include the titles
+output.directory <- "/Users/transfer/Dropbox/Scripts-new/cord19output-papers/"
+output.directory <- "/Users/transfer/Dropbox/Scripts-new/cord19output-papers-dev/"
+
 dir.create(output.directory)
 output.to.text.file <- function(textual.contents, file.name) {
 # code adapted from https://stackoverflow.com/questions/2470248/write-lines-of-text-to-a-file-in-r
@@ -85,6 +100,10 @@ get.json.text <- function(json.contents, section.to.get) {
     } # close for-loop through body
 
   } # close if-body
+  
+  # global variable, so you don't need to return it
+  total.files.processed <- total.files.processed + 1
+  
   return(textual.contents)
 } # close function definition
 
@@ -114,9 +133,13 @@ get.json.text <- function(json.contents, section.to.get) {
 ```{r parse.directory.contents}
 
 # NB NB NB: if there are more files in the directory than can be listed, you will get NAs for the file names. Consequently, I am limiting them by specifying their beginning, as well as their extension.  For example: ff*.json, rather than *.json
-directory.contents <- list.files("/Users/transfer/Dropbox/a-m/Corpora/cord19/noncomm_use_subset/", pattern = "ff*.json", full.names = TRUE)
+#directory.contents <- list.files("/Users/transfer/Dropbox/a-m/Corpora/cord19/noncomm_use_subset/", pattern = "ff*.json", full.names = TRUE)
 
-print(paste("Count of this subset of files:", as.character(length(directory.contents))))
+parse.directory.contents <- function(directory, file.pattern) {
+  directory.contents <- list.files(directory, pattern = file.pattern, full.names = TRUE)
+  print(paste("Directory:", directory, "File pattern:", file.pattern))
+  # TODO: keep track of this count so that you can make sure that you processed as many files as you expected to
+ print(paste("Count of this subset of files:", as.character(length(directory.contents))))
 print(directory.contents[1:10])
 
 for (i in 1:length(directory.contents)) {
@@ -126,9 +149,63 @@ for (i in 1:length(directory.contents)) {
   }
   paper.id <- json.contents$paper_id
   textual.contents <- get.json.text(json.contents, "TITLE")
+  #textual.contents <- get.json.text(json.contents, "ABSTRACT")
+  #textual.contents <- get.json.text(json.contents, "ALL")
+  
   file.name <- paste(output.directory, paper.id, sep = "")
   output.to.text.file(textual.contents, file.name = file.name)
-}
+ 
+} # close for-loop
+} # close function definition
+```
+
+# Go through the contents of the corpus
+
+```{r go.through.the.corpus}
+# there are a number of different subsets of the corpus--specify one of them
+directory <- "/Users/transfer/Dropbox/a-m/Corpora/cord19/noncomm_use_subset/"
+
+# There are too many files in some of these subsets to list, and when that
+# happens, you get a bunch of NAs.  So, I'm just reading in a subset of the files at 
+# a time.
+# NB: don't expect all of these to necessarily return any files.
+#file.pattern <- "ff*.json" # works in dev
+# file.pattern <- "[a-e]*.json"
+# file.pattern <- "[f-j]*.json"
+# file.pattern <- "[k-o]*.json"
+# file.pattern <- "[p-t]*.json"
+# file.pattern <- "[u-z]*.json"
+# file.pattern <- "0*.json"
+# file.pattern <- "1*.json"
+# file.pattern <- "2*.json"
+# file.pattern <- "3*.json"
+# file.pattern <- "4*.json"
+# file.pattern <- "5*.json"
+# file.pattern <- "6*.json"
+# file.pattern <- "7*.json"
+# file.pattern <- "8*.json"
+# file.pattern <- "9*.json"
+
+file.patterns <- c("[a-e]*.json",
+                   "[f-j]*.json",
+                   "[k-o]*.json",
+                   "[p-t]*.json",
+                   "[u-z]*.json",
+                   "0*.json",
+                   "1*.json",
+                   "2*.json",
+                   "3*.json",
+                   "4*.json",
+                   "5*.json",
+                   "6*.json",
+                   "7*.json",
+                   "8*.json",
+                   "9*.json")
+
+#parse.directory.contents(directory, file.pattern)
+parse.directory.contents(directory, file.patterns)
+
+print(paste("Total files processed:", total.files.processed))
 ```
 
 ### Extra code snippets that I have tried
