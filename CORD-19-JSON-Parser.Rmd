@@ -20,7 +20,8 @@ knitr::opts_chunk$set(echo = TRUE)
 library("rjson")
 
 # set this to TRUE for lots of helpful debugging output, or to FALSE to suppress it
-DEBUG <- TRUE
+#DEBUG <- TRUE
+DEBUG <- FALSE
 
 ```
 
@@ -36,11 +37,11 @@ total.files.processed <- 0 # tracks the number of files that got processed, so t
 
 ```{r output.to.text.file}
 # NB: if the directory already exists, it has to be manually emptied and deleted
-output.directory <- "/Users/transfer/Dropbox/Scripts-new/cord19output/"
-output.directory <- "/Users/transfer/Dropbox/Scripts-new/cord19output-titles/"
-output.directory <- "/Users/transfer/Dropbox/Scripts-new/cord19output-abstracts/" # note that this doesn't currently include the titles
+#output.directory <- "/Users/transfer/Dropbox/Scripts-new/cord19output/"
+#output.directory <- "/Users/transfer/Dropbox/Scripts-new/cord19output-titles/"
+#output.directory <- "/Users/transfer/Dropbox/Scripts-new/cord19output-abstracts/" # note that this doesn't currently include the titles
 output.directory <- "/Users/transfer/Dropbox/Scripts-new/cord19output-papers/"
-output.directory <- "/Users/transfer/Dropbox/Scripts-new/cord19output-papers-dev/"
+#output.directory <- "/Users/transfer/Dropbox/Scripts-new/cord19output-papers-dev/"
 
 dir.create(output.directory)
 output.to.text.file <- function(textual.contents, file.name) {
@@ -71,10 +72,11 @@ get.json.text <- function(json.contents, section.to.get) {
       print("************%%%%%%%%%%%%%%% TITLE TITLE TITLE %%%%%%%%%%%%%%%%%***********")
       print(json.contents$metadata$title)
  
-      ## WHY IS THIS "IF DEBUG"?????? XXXX TODO - figure it out
-      textual.contents <- paste(textual.contents, json.contents$metadata$title)
-    }
-  }
+
+    } # if DEBUG
+    ## WHY IS THIS "IF DEBUG"?????? XXXX TODO - figure it out
+    textual.contents <- paste(textual.contents, json.contents$metadata$title, "\n\n")
+  } # if TITLE or ALL
 
 
   if (section.to.get == "ABSTRACT" || section.to.get == "ALL") {
@@ -88,7 +90,7 @@ get.json.text <- function(json.contents, section.to.get) {
         print("*********%%%%%%%%%%% ABSTRACT ABSTRACT ABSTRACT %%%%%%%%%%%%%*********")
         print(json.contents$abstract[[j]]$text)
       }
-      textual.contents <- paste(textual.contents, json.contents$abstract[[j]]$text)
+      textual.contents <- paste(textual.contents, json.contents$abstract[[j]]$text, "\n\n")
     } # close for-loop through abstract contents
   } # close if-length-greater-than-0
   }
@@ -98,19 +100,23 @@ get.json.text <- function(json.contents, section.to.get) {
       print("***************%%%%%%%%%%%%%% BODY BODY BODY %%%%%%%%%%%%%%%%*************")
     }
     # this for-loop goes through a single file and extracts the text of the body. need separate code for title, abstract (if there be one), etc.
+    
+    # TODO: this does not separate paragraphs. Look into improving that.
     for (i in 1:length(json.contents$body_text)) {
       if (DEBUG) {
         print(paste("Body iterator value:", i))
         print(json.contents$body_text[[i]]$text)
-      }
-      textual.contents <- paste(json.contents$body_text[[i]]$text)
+      } # close if-DEBUG
+      textual.contents <- paste(textual.contents, json.contents$body_text[[i]]$text)
     } # close for-loop through body
 
   } # close if-body
   
   # global variable, so you don't need to return it
   total.files.processed <- total.files.processed + 1
-  
+  if (DEBUG) {
+    print(paste("Cumulative total files processed:", total.files.processed))
+  }
   return(textual.contents)
 } # close function definition
 
@@ -209,7 +215,7 @@ file.patterns <- c("[a-e]*.json",
                    "8*.json",
                    "9*.json")
 
-file.patterns <- c("ff0*.json")
+#file.patterns <- c("ff0*.json")
 # one directory + file pattern at a time (for development/testing)
 #parse.directory.contents(directory, file.pattern)
 parse.directory.contents(directory, file.patterns)
